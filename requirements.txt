@@ -1,0 +1,32 @@
+# Survey Archetypes - Python Dependencies
+
+# Core data processing
+numpy>=1.24.0
+pandas>=2.0.0
+
+# Machine learning
+scikit-learn>=1.3.0
+
+# Ollama official Python client
+ollama>=0.4.0
+
+# Visualization
+matplotlib>=3.7.0
+seaborn>=0.12.0
+
+# Data validation
+pydantic>=2.0.0
+
+# Optional: Archetypal Analysis (PCHA)
+# Uncomment if you want true PCHA instead of NMF approximation
+# archetypes>=0.1.0
+
+# Optional: Advanced scientific computing
+scipy>=1.11.0
+archetypes
+# Optional: Testing
+# pytest>=7.4.0
+# pytest-cov>=4.1.0
+
+# Optional: Progress bars
+# tqdm>=4.66.0
