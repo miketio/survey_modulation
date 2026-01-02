@@ -3,13 +3,14 @@ scripts/run_simulation.py
 
 Complete population simulation workflow.
 Calibrates personas and simulates large populations (1000+ respondents).
+Now loads second survey questions from JSON configuration.
 """
 
 import numpy as np
 
 # Configuration
 from config.settings import PATHS, SIMULATION, initialize
-from config.questions import SECOND_SURVEY_QUESTIONS
+from config.questions import get_second_survey_questions
 
 # Simulation
 from simulation.population_simulator import PopulationSimulator
@@ -68,6 +69,18 @@ def main():
     # Initialize
     initialize()
     
+    # Load second survey questions from JSON
+    try:
+        second_survey_questions = get_second_survey_questions()
+        print(f"✅ Loaded second survey questions from JSON")
+    except FileNotFoundError:
+        print("❌ Error: validation_survey.json not found")
+        print("   Run 'python migrate_to_json.py' to create default templates")
+        return
+    except Exception as e:
+        print(f"❌ Error loading questions: {e}")
+        return
+    
     # Configuration
     N_CALIBRATION_SAMPLES = SIMULATION.N_CALIBRATION_SAMPLES
     N_SIMULATED_RESPONDENTS = SIMULATION.N_SIMULATED_RESPONDENTS
@@ -75,12 +88,12 @@ def main():
     print(f"\n📋 Configuration:")
     print(f"   • Calibration samples: {N_CALIBRATION_SAMPLES}")
     print(f"   • Simulated respondents: {N_SIMULATED_RESPONDENTS}")
-    print(f"   • Test questions: {len(SECOND_SURVEY_QUESTIONS)}")
+    print(f"   • Test questions: {len(second_survey_questions)}")
     
     # Count question types
     from config.questions import QuestionType
-    n_likert = sum(1 for q in SECOND_SURVEY_QUESTIONS if q.type == QuestionType.LIKERT)
-    n_other = len(SECOND_SURVEY_QUESTIONS) - n_likert
+    n_likert = sum(1 for q in second_survey_questions if q.type == QuestionType.LIKERT)
+    n_other = len(second_survey_questions) - n_likert
     print(f"      - Likert: {n_likert}")
     print(f"      - Categorical/Ordinal: {n_other}")
     
@@ -126,7 +139,7 @@ def main():
     
     try:
         distributions = simulator.calibrate(
-            SECOND_SURVEY_QUESTIONS,
+            second_survey_questions,
             n_samples=N_CALIBRATION_SAMPLES,
             verbose=True
         )
@@ -156,7 +169,7 @@ def main():
     
     try:
         simulated_df = simulator.simulate_population(
-            SECOND_SURVEY_QUESTIONS,
+            second_survey_questions,
             n_respondents=N_SIMULATED_RESPONDENTS,
             verbose=True
         )
@@ -186,7 +199,7 @@ def main():
     
     # Response statistics for Likert questions
     from config.questions import QuestionType
-    likert_questions = [q for q in SECOND_SURVEY_QUESTIONS if q.type == QuestionType.LIKERT]
+    likert_questions = [q for q in second_survey_questions if q.type == QuestionType.LIKERT]
     
     if len(likert_questions) > 0:
         print(f"\n   Response statistics (Likert questions):")
@@ -214,7 +227,7 @@ def main():
     # Plot 2: Simulated population
     viz.plot_simulated_population(
         simulated_df,
-        SECOND_SURVEY_QUESTIONS,
+        second_survey_questions,
         filename="5_simulated_population.png"
     )
     
@@ -232,13 +245,14 @@ def main():
     print(f"\n📊 Quick Statistics:")
     print(f"   • Simulated: {len(simulated_df)} respondents")
     print(f"   • Based on: {summary_df['archetype_idx'].nunique()} archetypes")
-    print(f"   • Questions: {len(SECOND_SURVEY_QUESTIONS)}")
+    print(f"   • Questions: {len(second_survey_questions)}")
     
     print(f"\n💡 Next Steps:")
     print(f"   1. Analyze simulated_survey.csv like real survey data")
     print(f"   2. Compare with original archetypes")
     print(f"   3. Use for power analysis or method testing")
     print(f"   4. Adjust N_SIMULATED_RESPONDENTS in config for different sizes")
+    print(f"   5. Edit validation_survey.json to customize second survey questions")
     
     print("\n" + "="*80 + "\n")
 

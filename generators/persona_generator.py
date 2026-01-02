@@ -48,7 +48,6 @@ class PersonaSchema(BaseModel):
     def validate_lists(cls, v):
         """Ensure values and fears are valid lists"""
         if isinstance(v, str):
-            # If it's a string, try to split it
             return [item.strip() for item in v.split(',') if item.strip()]
         if not isinstance(v, list):
             return ["Default value"]

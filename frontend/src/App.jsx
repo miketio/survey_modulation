@@ -24,8 +24,7 @@ export default function SurveyArchetypesApp() {
 
   const [availableQuestionTemplates, setAvailableQuestionTemplates] = useState([]);
   const [availableArchetypeSets, setAvailableArchetypeSets] = useState([]);
-  const [templateQuestions, setTemplateQuestions] = useState({}); // Cache for loaded templates
-
+  const [templateQuestions, setTemplateQuestions] = useState({}); 
   // Discovery State
   const [kResults, setKResults] = useState([]);
   const [selectedK, setSelectedK] = useState(null);
@@ -55,52 +54,44 @@ export default function SurveyArchetypesApp() {
   useEffect(() => {
     const loadConfigurations = async () => {
       try {
-        // 1. Load available question templates
         const templatesRes = await fetch(`${API_URL}/config/questions`);
         const templatesData = await templatesRes.json();
         setAvailableQuestionTemplates(templatesData.templates);
         
-        // 2. Load default 'opinion_survey' if it exists
         if (templatesData.templates.includes('opinion_survey')) {
           const defaultRes = await fetch(`${API_URL}/config/questions/opinion_survey`);
           const defaultData = await defaultRes.json();
           
           setQuestions(defaultData.questions);
-          
-          // Cache it
+
           setTemplateQuestions(prev => ({
             ...prev,
             'opinion_survey': defaultData.questions
           }));
         }
 
-        // 3. Load default 'validation_survey' for Tab 4 (Second Survey)
         if (templatesData.templates.includes('validation_survey')) {
           const validRes = await fetch(`${API_URL}/config/questions/validation_survey`);
           const validData = await validRes.json();
           
           setSecondSurveyQuestions(validData.questions);
           
-          // Cache it
           setTemplateQuestions(prev => ({
             ...prev,
             'validation_survey': validData.questions
           }));
         }
         
-        // 4. Load available archetype sets
         const archetypesRes = await fetch(`${API_URL}/config/archetypes`);
         const archetypesData = await archetypesRes.json();
         setAvailableArchetypeSets(archetypesData.archetype_sets);
         
-        // 5. Load default archetypes
         if (archetypesData.archetype_sets.includes('default')) {
           const defaultArchRes = await fetch(`${API_URL}/config/archetypes/default`);
           const defaultArchData = await defaultArchRes.json();
           setInitialArchetypes(defaultArchData.archetypes);
         }
         
-        // 6. Load system configuration
         const configRes = await fetch(`${API_URL}/config/system`);
         const configData = await configRes.json();
         setConfig({
@@ -112,7 +103,7 @@ export default function SurveyArchetypesApp() {
           simulatedPopulation: configData.simulation.n_simulated_respondents
         });
         
-        setStatusMessage('✅ Configurations loaded from backend');
+        setStatusMessage('Configurations loaded from backend');
         setTimeout(() => setStatusMessage(''), 2000);
         
       } catch (err) {
@@ -129,7 +120,6 @@ export default function SurveyArchetypesApp() {
     if (!templateName) return;
     
     try {
-      // Check cache first
       if (templateQuestions[templateName]) {
         setSecondSurveyQuestions(templateQuestions[templateName]);
         setStatusMessage(`Loaded template: ${templateName}`);
@@ -143,8 +133,7 @@ export default function SurveyArchetypesApp() {
       
       const data = await response.json();
       setSecondSurveyQuestions(data.questions);
-      
-      // Cache it
+
       setTemplateQuestions(prev => ({
         ...prev,
         [templateName]: data.questions
@@ -281,7 +270,6 @@ export default function SurveyArchetypesApp() {
     setStatusMessage('Starting calibration phase...');
 
     try {
-      // ✅ Format questions properly
       const questionsPayload = secondSurveyQuestions.map(q => ({
         id: q.id,
         text: q.text,
@@ -292,7 +280,6 @@ export default function SurveyArchetypesApp() {
 
       console.log('📤 Sending to backend:', questionsPayload);
 
-      // ✅ Send questions to backend
       const saveResponse = await fetch(`${API_URL}/survey/questions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1037,21 +1024,18 @@ export default function SurveyArchetypesApp() {
     const isEditing = editingPersona?.archetype_index === persona.archetype_index;
     const [editData, setEditData] = useState(persona);
     
-    // Local string state for typing freedom
     const [valuesText, setValuesText] = useState('');
     const [fearsText, setFearsText] = useState('');
 
     useEffect(() => {
       if (isEditing) {
         setEditData(persona);
-        // Convert arrays to comma-separated strings for editing
         setValuesText(Array.isArray(persona.values) ? persona.values.join(', ') : '');
         setFearsText(Array.isArray(persona.fears) ? persona.fears.join(', ') : '');
       }
     }, [isEditing, persona]);
 
     const handleSave = () => {
-      // Parse comma-separated text into arrays only on save
       const parsedValues = valuesText
         .split(',')
         .map(v => v.trim())

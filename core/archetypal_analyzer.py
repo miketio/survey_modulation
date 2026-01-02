@@ -220,12 +220,12 @@ class ArchetypalAnalyzer:
         # Per-respondent residuals
         self.residuals = np.sqrt(np.sum((data - reconstructed)**2, axis=1))
         
-        # Total variance explained (R²)
+        # Total variance explained (R^2)
         ss_total = np.sum((data - np.mean(data, axis=0))**2)
         ss_residual = np.sum((data - reconstructed)**2)
         self.total_r2 = 1 - (ss_residual / ss_total)
         
-        # Per-archetype contribution to R²
+        # Per-archetype contribution to R^2
         self.r2_scores = []
         for i in range(self.n_archetypes):
             comp_i = self.weights[:, i:i+1] @ self.archetypes[i:i+1, :]

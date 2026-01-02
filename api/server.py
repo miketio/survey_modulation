@@ -104,13 +104,10 @@ def questions_from_frontend(questions_data: List[Dict]) -> List[Question]:
                 scale=(1, 5)
             ))
         elif q_type in [QuestionType.CATEGORICAL, QuestionType.ORDINAL]:
-            # ✅ FIX: Handle both string and list formats
             options_data = q_data.get('options', '')
             
-            # If it's already a list, use it directly
             if isinstance(options_data, list):
                 options = [str(opt).strip() for opt in options_data if opt]
-            # If it's a string, split it
             elif isinstance(options_data, str):
                 options = [opt.strip() for opt in options_data.split(',') if opt.strip()]
             else:
@@ -478,7 +475,6 @@ async def calibration_live(websocket: WebSocket):
                 
                 # Calculate statistics based on question type
                 if question.type == QuestionType.LIKERT:
-                    # Convert to numeric - FIXED: handle non-numeric responses
                     numeric_samples = []
                     for s in samples:
                         try:
@@ -521,11 +517,8 @@ async def calibration_live(websocket: WebSocket):
                     }
                 
                 else:  # Categorical or Ordinal
-                    # Count string samples - FIXED: ensure samples is always a list
                     if not isinstance(samples, list):
-                        samples = [samples]  # Wrap single value in list
-                    
-                    # Convert all to strings for consistent counting
+                        samples = [samples]  
                     string_samples = [str(s) for s in samples]
                     
                     sample_counts = {}
@@ -537,13 +530,13 @@ async def calibration_live(websocket: WebSocket):
                         modal_answer = question.options[0] if question.options else "Unknown"
                         p_stay = 1.0
                         p_change = 0.0
-                        distribution = {modal_answer: n_samples}  # FIXED: Create proper distribution
+                        distribution = {modal_answer: n_samples}  
                     else:
                         modal_answer = max(sample_counts, key=sample_counts.get)
-                        total_samples = len(string_samples)  # FIXED: Use actual sample count
+                        total_samples = len(string_samples)  
                         p_stay = sample_counts[modal_answer] / total_samples
                         p_change = 1.0 - p_stay
-                        distribution = sample_counts  # Already properly formatted
+                        distribution = sample_counts  
                     
                     result = {
                         'persona_index': agent_idx,
@@ -558,8 +551,8 @@ async def calibration_live(websocket: WebSocket):
                         'p_stay': p_stay,
                         'p_higher': None,
                         'p_change': p_change,
-                        'samples': string_samples,  # FIXED: Store as list of strings
-                        'distribution': distribution  # FIXED: Always present
+                        'samples': string_samples,  
+                        'distribution': distribution  
                     }
                 
                 calibration_results.append(result)
@@ -641,7 +634,6 @@ async def run_simulation(request: Dict[str, Any]):
                 'archetype_name': state.personas[archetype_idx]['name']
             }
             
-            # For each question, sample based on calibration
             for q in state.second_survey_questions:
                 # Find calibration data for this archetype+question
                 calib_row = next((c for c in state.calibration_data 
