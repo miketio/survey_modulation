@@ -1,0 +1,104 @@
+{
+  "name": "Default Archetypes",
+  "description": "Standard 4-archetype configuration for survey generation",
+  "version": "1.0",
+  "demographic_context": "University Students in New York",
+  "archetypes": [
+    {
+      "name": "Young Urban Progressive",
+      "description": "Archetype: Young Urban Progressive",
+      "opinion_pattern": [
+        3,
+        5,
+        2,
+        5,
+        5
+      ],
+      "weight": 0.3,
+      "variance": {
+        "likert": 0.8,
+        "categorical": 0.2,
+        "ordinal": 0.15
+      },
+      "demographic_pattern": {
+        "age": "18-24",
+        "location": "Urban/City",
+        "education": "Bachelor's",
+        "politics": "Very Liberal",
+        "news": "Daily"
+      }
+    },
+    {
+      "name": "Conservative Rural Traditionalist",
+      "description": "Archetype: Conservative Rural Traditionalist",
+      "opinion_pattern": [
+        2,
+        2,
+        5,
+        2,
+        2
+      ],
+      "weight": 0.25,
+      "variance": {
+        "likert": 0.7,
+        "categorical": 0.15,
+        "ordinal": 0.1
+      },
+      "demographic_pattern": {
+        "age": "45-54",
+        "location": "Rural/Countryside",
+        "education": "High School",
+        "politics": "Conservative",
+        "news": "Sometimes"
+      }
+    },
+    {
+      "name": "Middle-Aged Suburban Moderate",
+      "description": "Archetype: Middle-Aged Suburban Moderate",
+      "opinion_pattern": [
+        3,
+        4,
+        3,
+        4,
+        3
+      ],
+      "weight": 0.3,
+      "variance": {
+        "likert": 0.6,
+        "categorical": 0.1,
+        "ordinal": 0.1
+      },
+      "demographic_pattern": {
+        "age": "35-44",
+        "location": "Suburban",
+        "education": "Bachelor's",
+        "politics": "Moderate",
+        "news": "Often"
+      }
+    },
+    {
+      "name": "Apathetic Low-Engagement",
+      "description": "Archetype: Apathetic Low-Engagement",
+      "opinion_pattern": [
+        3,
+        3,
+        3,
+        3,
+        2
+      ],
+      "weight": 0.15,
+      "variance": {
+        "likert": 1.0,
+        "categorical": 0.3,
+        "ordinal": 0.2
+      },
+      "demographic_pattern": {
+        "age": "25-34",
+        "location": "Urban/City",
+        "education": "Some College",
+        "politics": "Moderate",
+        "news": "Rarely"
+      }
+    }
+  ]
+}

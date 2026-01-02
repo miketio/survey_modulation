@@ -1,4 +1,4 @@
-# api/server.py - Updated with calibration and simulation
+# api/server.py - Complete rewrite with JSON configuration
 import sys
 import os
 from pathlib import Path
@@ -22,18 +22,29 @@ import seaborn as sns
 # Import existing logic
 from config.settings import PATHS, ANALYSIS, DATA_GEN, initialize
 from config.questions import Question, QuestionType, get_opinion_questions
+from config.loader import (
+    load_questions,
+    save_questions,
+    load_archetypes,
+    save_archetypes,
+    load_system_config,
+    save_system_config,
+    load_personas,
+    save_personas,
+    get_question_templates,
+    get_archetype_sets
+)
 from generators.survey_data_generator import SurveyDataGenerator
 from core.archetypal_analyzer import ArchetypalAnalyzer
 from core.encoding import SurveyEncoder
 from generators.persona_generator import PersonaGenerator
 from agents.survey_agent import SurveyAgent
-from utils.file_io import save_personas, save_dataframe, save_json
-from simulation.population_simulator import PopulationSimulator
+from utils.file_io import save_dataframe
 
 # Initialize
 initialize()
 
-app = FastAPI(title="Survey Archetypes API v2")
+app = FastAPI(title="Survey Archetypes API v2 - JSON Config")
 
 # CORS
 app.add_middleware(
@@ -44,7 +55,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Global state
+# ============================================================================
+# GLOBAL STATE
+# ============================================================================
+
 class AppState:
     def __init__(self):
         self.df = None
@@ -53,14 +67,18 @@ class AppState:
         self.personas = []
         self.questions = []
         self.initial_archetypes = []
+        
+        # Load config from JSON
+        system_config = load_system_config()
         self.config = {
-            'demographicContext': 'University Students in New York',
-            'temperature': 0.7,
-            'randomSeed': 42,
-            'respondents': 200,
-            'calibrationSamples': 10,
-            'simulatedPopulation': 1000
+            'demographicContext': system_config['data_generation']['demographic_context'],
+            'temperature': system_config['ollama']['temperature_persona'],
+            'randomSeed': system_config['analysis']['random_seed'],
+            'respondents': system_config['data_generation']['n_respondents'],
+            'calibrationSamples': system_config['simulation']['n_calibration_samples'],
+            'simulatedPopulation': system_config['simulation']['n_simulated_respondents']
         }
+        
         self.second_survey_questions = []
         self.calibration_data = []
         self.simulated_df = None
@@ -86,8 +104,18 @@ def questions_from_frontend(questions_data: List[Dict]) -> List[Question]:
                 scale=(1, 5)
             ))
         elif q_type in [QuestionType.CATEGORICAL, QuestionType.ORDINAL]:
-            options_str = q_data.get('options', '')
-            options = [opt.strip() for opt in options_str.split(',') if opt.strip()]
+            # ✅ FIX: Handle both string and list formats
+            options_data = q_data.get('options', '')
+            
+            # If it's already a list, use it directly
+            if isinstance(options_data, list):
+                options = [str(opt).strip() for opt in options_data if opt]
+            # If it's a string, split it
+            elif isinstance(options_data, str):
+                options = [opt.strip() for opt in options_data.split(',') if opt.strip()]
+            else:
+                options = ['Option 1', 'Option 2', 'Option 3']
+            
             if not options:
                 options = ['Option 1', 'Option 2', 'Option 3']
             
@@ -100,16 +128,150 @@ def questions_from_frontend(questions_data: List[Dict]) -> List[Question]:
             ))
     
     return questions
-
 # ============================================================================
-# ENDPOINTS
+# BASIC ENDPOINTS
 # ============================================================================
 
 @app.get("/")
 def health_check():
-    return {"status": "online", "system": "Survey Archetypes v2"}
+    return {"status": "online", "system": "Survey Archetypes v2 - JSON Config"}
 
-# --- 1. DATA GENERATION WITH CUSTOM ARCHETYPES ---
+# ============================================================================
+# CONFIGURATION ENDPOINTS
+# ============================================================================
+
+@app.get("/api/config/system")
+async def get_system_config_endpoint():
+    """Get current system configuration"""
+    try:
+        config = load_system_config()
+        return config
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/api/config/system")
+async def update_system_config_endpoint(config: Dict[str, Any]):
+    """Update system configuration"""
+    try:
+        save_system_config(config)
+        
+        # Update state.config to match
+        state.config = {
+            'demographicContext': config['data_generation']['demographic_context'],
+            'temperature': config['ollama']['temperature_persona'],
+            'randomSeed': config['analysis']['random_seed'],
+            'respondents': config['data_generation']['n_respondents'],
+            'calibrationSamples': config['simulation']['n_calibration_samples'],
+            'simulatedPopulation': config['simulation']['n_simulated_respondents']
+        }
+        
+        return {"message": "Configuration updated", "config": config}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/config/questions")
+async def get_available_question_templates():
+    """Get list of available question templates"""
+    try:
+        templates = get_question_templates()
+        return {"templates": templates}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/config/questions/{template_name}")
+async def get_question_template(template_name: str):
+    """Get questions from a specific template"""
+    try:
+        questions = load_questions(template_name)
+        return {
+            "template": template_name,
+            "questions": [q.to_dict() for q in questions]
+        }
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Template '{template_name}' not found")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/config/questions/{template_name}")
+async def save_question_template(template_name: str, request: Dict[str, Any]):
+    """Save a custom question template"""
+    try:
+        questions_data = request.get('questions', [])
+        questions = []
+        
+        for q_data in questions_data:
+            q = Question(
+                id=q_data['id'],
+                text=q_data['text'],
+                type=QuestionType(q_data['type']),
+                category=q_data.get('category', 'opinion'),
+                scale=tuple(q_data['scale']) if 'scale' in q_data else None,
+                options=q_data.get('options')
+            )
+            questions.append(q)
+        
+        save_questions(
+            questions,
+            template_name,
+            description=request.get('description', ''),
+            version=request.get('version', '1.0')
+        )
+        
+        return {
+            "message": f"Template '{template_name}' saved",
+            "count": len(questions)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/config/archetypes")
+async def get_available_archetypes():
+    """Get list of available archetype sets"""
+    try:
+        sets = get_archetype_sets(include_discovered=True)
+        return {"archetype_sets": sets}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/config/archetypes/{set_name}")
+async def get_archetype_set(set_name: str):
+    """Get a specific archetype set"""
+    try:
+        archetypes = load_archetypes(set_name)
+        return {
+            "name": set_name,
+            "archetypes": archetypes
+        }
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Archetype set '{set_name}' not found")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/config/archetypes/{set_name}")
+async def save_archetype_set(set_name: str, request: Dict[str, Any]):
+    """Save a custom archetype set"""
+    try:
+        archetypes = request.get('archetypes', [])
+        
+        save_archetypes(
+            archetypes,
+            set_name,
+            description=request.get('description', ''),
+            version=request.get('version', '1.0'),
+            demographic_context=request.get('demographic_context', ''),
+            discovered=request.get('discovered', False)
+        )
+        
+        return {
+            "message": f"Archetype set '{set_name}' saved",
+            "count": len(archetypes)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================================
+# DATA GENERATION
+# ============================================================================
 
 @app.post("/api/data/generate")
 async def generate_data(request: Dict[str, Any]):
@@ -117,7 +279,13 @@ async def generate_data(request: Dict[str, Any]):
     try:
         config = request.get('config', {})
         state.config = config
-        state.initial_archetypes = request.get('archetypes', [])
+        
+        # Get archetypes from request or use default
+        if 'archetypes' in request and request['archetypes']:
+            state.initial_archetypes = request.get('archetypes', [])
+        else:
+            # Load default archetypes from JSON
+            state.initial_archetypes = load_archetypes("default")
         
         # Update settings
         DATA_GEN.N_RESPONDENTS = config.get('respondents', 200)
@@ -129,29 +297,10 @@ async def generate_data(request: Dict[str, Any]):
         state.questions = questions_from_frontend(questions_data)
         
         # Generate data with custom archetypes
-        generator = SurveyDataGenerator(seed=ANALYSIS.RANDOM_SEED)
-        
-        # Override true_archetypes with custom ones
-        generator.true_archetypes = []
-        for arch in state.initial_archetypes:
-            archetype_def = {
-                'name': arch['name'],
-                'opinion_pattern': arch['opinion_pattern'],
-                'weight': arch['weight'],
-                'variance': {'likert': 0.8, 'categorical': 0.2, 'ordinal': 0.15},
-                'demographic_pattern': {}
-            }
-            
-            # Map pattern to question IDs
-            full_pattern = {}
-            for i, q in enumerate(generator.get_opinion_questions()):
-                if i < len(arch['opinion_pattern']):
-                    full_pattern[q.id] = arch['opinion_pattern'][i]
-                else:
-                    full_pattern[q.id] = 3.0
-            
-            archetype_def['pattern'] = full_pattern
-            generator.true_archetypes.append(archetype_def)
+        generator = SurveyDataGenerator(
+            archetypes=state.initial_archetypes,
+            seed=ANALYSIS.RANDOM_SEED
+        )
         
         df = generator.generate(n_respondents=DATA_GEN.N_RESPONDENTS)
         state.df = df
@@ -170,7 +319,9 @@ async def generate_data(request: Dict[str, Any]):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
-# --- 2-3. K-ANALYSIS & PERSONA GENERATION (unchanged) ---
+# ============================================================================
+# ARCHETYPAL ANALYSIS
+# ============================================================================
 
 @app.post("/api/analysis/k-comparison")
 async def run_k_comparison():
@@ -200,6 +351,10 @@ async def run_k_comparison():
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================================
+# PERSONA GENERATION
+# ============================================================================
 
 @app.post("/api/personas/generate")
 async def generate_personas(k: int):
@@ -232,7 +387,7 @@ async def generate_personas(k: int):
             personas.append(persona)
         
         state.personas = personas
-        save_personas(personas)
+        save_personas(personas, name="generated_personas")
         
         return {"message": "Personas generated", "count": len(personas), "personas": personas}
     
@@ -247,7 +402,7 @@ async def update_persona(persona: Dict[str, Any]):
     try:
         archetype_idx = persona.get('archetype_index')
         
-        # CRITICAL FIX: Regenerate system prompt from edited fields
+        # Regenerate system prompt from edited fields
         from generators.persona_generator import generate_system_prompt
         persona['system_prompt'] = generate_system_prompt(persona)
         
@@ -257,7 +412,7 @@ async def update_persona(persona: Dict[str, Any]):
                 state.personas[i] = persona
                 break
         
-        save_personas(state.personas)
+        save_personas(state.personas, name="generated_personas")
         return {"message": "Persona updated with regenerated system prompt", "persona": persona}
     
     except Exception as e:
@@ -265,7 +420,9 @@ async def update_persona(persona: Dict[str, Any]):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
-# --- 4. SECOND SURVEY QUESTIONS ---
+# ============================================================================
+# SECOND SURVEY QUESTIONS
+# ============================================================================
 
 @app.post("/api/survey/questions")
 async def save_second_survey_questions(questions: List[Dict]):
@@ -277,7 +434,9 @@ async def save_second_survey_questions(questions: List[Dict]):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# --- 5. CALIBRATION PHASE (NEW) ---
+# ============================================================================
+# CALIBRATION PHASE
+# ============================================================================
 
 @app.websocket("/api/calibration/live")
 async def calibration_live(websocket: WebSocket):
@@ -291,11 +450,15 @@ async def calibration_live(websocket: WebSocket):
         
         if len(state.personas) == 0:
             await websocket.send_json({"type": "error", "message": "No personas available"})
-            return  # Exit early
+            await asyncio.sleep(0.1)
+            await websocket.close()
+            return
         
         if len(state.second_survey_questions) == 0:
             await websocket.send_json({"type": "error", "message": "No questions defined"})
-            return  # Exit early
+            await asyncio.sleep(0.1)
+            await websocket.close()
+            return
         
         # Create agents
         agents = [SurveyAgent(p) for p in state.personas]
@@ -315,8 +478,19 @@ async def calibration_live(websocket: WebSocket):
                 
                 # Calculate statistics based on question type
                 if question.type == QuestionType.LIKERT:
-                    # Convert to numeric
-                    numeric_samples = [float(s) for s in samples]
+                    # Convert to numeric - FIXED: handle non-numeric responses
+                    numeric_samples = []
+                    for s in samples:
+                        try:
+                            numeric_samples.append(float(s))
+                        except (ValueError, TypeError):
+                            # If conversion fails, default to neutral (3)
+                            numeric_samples.append(3.0)
+                    
+                    if len(numeric_samples) == 0:
+                        # Fallback if no valid samples
+                        numeric_samples = [3.0] * n_samples
+                    
                     modal_answer = int(max(set(numeric_samples), key=numeric_samples.count))
                     mean_answer = float(np.mean(numeric_samples))
                     std_answer = float(np.std(numeric_samples))
@@ -326,9 +500,10 @@ async def calibration_live(websocket: WebSocket):
                     n_higher = sum(1 for s in numeric_samples if s > modal_answer)
                     n_stay = sum(1 for s in numeric_samples if s == modal_answer)
                     
-                    p_lower = n_lower / len(numeric_samples)
-                    p_higher = n_higher / len(numeric_samples)
-                    p_stay = n_stay / len(numeric_samples)
+                    total = len(numeric_samples)
+                    p_lower = n_lower / total if total > 0 else 0.0
+                    p_higher = n_higher / total if total > 0 else 0.0
+                    p_stay = n_stay / total if total > 0 else 1.0
                     
                     result = {
                         'persona_index': agent_idx,
@@ -346,14 +521,29 @@ async def calibration_live(websocket: WebSocket):
                     }
                 
                 else:  # Categorical or Ordinal
-                    # String samples
+                    # Count string samples - FIXED: ensure samples is always a list
+                    if not isinstance(samples, list):
+                        samples = [samples]  # Wrap single value in list
+                    
+                    # Convert all to strings for consistent counting
+                    string_samples = [str(s) for s in samples]
+                    
                     sample_counts = {}
-                    for s in samples:
+                    for s in string_samples:
                         sample_counts[s] = sample_counts.get(s, 0) + 1
                     
-                    modal_answer = max(sample_counts, key=sample_counts.get)
-                    p_stay = sample_counts[modal_answer] / len(samples)
-                    p_change = 1.0 - p_stay
+                    if len(sample_counts) == 0:
+                        # Fallback if no samples
+                        modal_answer = question.options[0] if question.options else "Unknown"
+                        p_stay = 1.0
+                        p_change = 0.0
+                        distribution = {modal_answer: n_samples}  # FIXED: Create proper distribution
+                    else:
+                        modal_answer = max(sample_counts, key=sample_counts.get)
+                        total_samples = len(string_samples)  # FIXED: Use actual sample count
+                        p_stay = sample_counts[modal_answer] / total_samples
+                        p_change = 1.0 - p_stay
+                        distribution = sample_counts  # Already properly formatted
                     
                     result = {
                         'persona_index': agent_idx,
@@ -368,8 +558,8 @@ async def calibration_live(websocket: WebSocket):
                         'p_stay': p_stay,
                         'p_higher': None,
                         'p_change': p_change,
-                        'samples': samples,
-                        'distribution': sample_counts
+                        'samples': string_samples,  # FIXED: Store as list of strings
+                        'distribution': distribution  # FIXED: Always present
                     }
                 
                 calibration_results.append(result)
@@ -384,6 +574,8 @@ async def calibration_live(websocket: WebSocket):
         
         # Save calibration data
         state.calibration_data = calibration_results
+        
+        # Create DataFrame - handle mixed types
         calibration_df = pd.DataFrame(calibration_results)
         save_dataframe(calibration_df, filename="calibration_data.csv")
         
@@ -394,8 +586,7 @@ async def calibration_live(websocket: WebSocket):
             "total_items": len(calibration_results)
         })
         
-        # CRITICAL FIX: Explicitly close after completion
-        await asyncio.sleep(0.1)  # Give client time to receive message
+        await asyncio.sleep(0.1)
         
     except WebSocketDisconnect:
         print("Client disconnected during calibration")
@@ -404,17 +595,19 @@ async def calibration_live(websocket: WebSocket):
         traceback.print_exc()
         try:
             await websocket.send_json({"type": "error", "message": str(e)})
+            await asyncio.sleep(0.1)
         except:
-            pass  # Connection might already be closed
+            pass
     finally:
-        # Ensure connection is closed
         try:
             await websocket.close()
         except:
-            pass  # Already closed
+            pass
         print("WebSocket connection closed")
 
-# --- 6. POPULATION SIMULATION (NEW) ---
+# ============================================================================
+# POPULATION SIMULATION
+# ============================================================================
 
 @app.post("/api/simulation/run")
 async def run_simulation(request: Dict[str, Any]):
@@ -481,7 +674,7 @@ async def run_simulation(request: Dict[str, Any]):
                 else:
                     # Default values
                     if q.type == QuestionType.LIKERT:
-                        response[q.id] = 3  # Default neutral
+                        response[q.id] = 3
                     else:
                         response[q.id] = q.options[len(q.options) // 2] if q.options else 'Unknown'
             
@@ -511,7 +704,9 @@ async def run_simulation(request: Dict[str, Any]):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
-# --- 7. VISUALIZATION (NEW) ---
+# ============================================================================
+# VISUALIZATION
+# ============================================================================
 
 @app.post("/api/visualization/simulated-population")
 async def generate_visualization():
@@ -618,7 +813,9 @@ async def generate_visualization():
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
-# --- 8. DOWNLOADS ---
+# ============================================================================
+# DOWNLOAD ENDPOINTS
+# ============================================================================
 
 @app.get("/api/download/simulated-survey")
 async def download_simulated_survey():

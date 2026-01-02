@@ -1,0 +1,57 @@
+{
+  "name": "Opinion Survey (Default)",
+  "description": "Standard 5-question opinion survey for archetypal analysis",
+  "version": "1.0",
+  "questions": [
+    {
+      "id": "Q1",
+      "text": "I trust government institutions",
+      "type": "likert",
+      "category": "opinion",
+      "scale": [
+        1,
+        5
+      ]
+    },
+    {
+      "id": "Q4",
+      "text": "Technological changes bring more benefits than harm",
+      "type": "likert",
+      "category": "opinion",
+      "scale": [
+        1,
+        5
+      ]
+    },
+    {
+      "id": "Q6",
+      "text": "It is important to preserve traditional values",
+      "type": "likert",
+      "category": "opinion",
+      "scale": [
+        1,
+        5
+      ]
+    },
+    {
+      "id": "Q8",
+      "text": "Ecology is more important than economic growth",
+      "type": "likert",
+      "category": "opinion",
+      "scale": [
+        1,
+        5
+      ]
+    },
+    {
+      "id": "Q9",
+      "text": "I am willing to take risks for new opportunities",
+      "type": "likert",
+      "category": "opinion",
+      "scale": [
+        1,
+        5
+      ]
+    }
+  ]
+}

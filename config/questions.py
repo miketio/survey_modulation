@@ -2,11 +2,14 @@
 config/questions.py
 
 Survey question definitions and question type management.
+Now loads question data from JSON templates via loader.
 """
 
 from enum import Enum
 from typing import List, Dict, Tuple
 from dataclasses import dataclass
+
+from config.loader import load_questions as _load_questions
 
 # ============================================================================
 # QUESTION TYPES
@@ -53,194 +56,171 @@ class Question:
         }
         
         if self.scale:
-            result['scale'] = self.scale
+            result['scale'] = list(self.scale)
         if self.options:
             result['options'] = self.options
             
         return result
 
 # ============================================================================
-# OPINION QUESTIONS (for archetypal analysis)
+# QUESTION LOADING FUNCTIONS
 # ============================================================================
 
-OPINION_QUESTIONS = [
-    Question(
-        id="Q1",
-        text="I trust government institutions",
-        type=QuestionType.LIKERT,
-        category="opinion",
-        scale=(1, 5)
-    ),
-    Question(
-        id="Q4",
-        text="Technological changes bring more benefits than harm",
-        type=QuestionType.LIKERT,
-        category="opinion",
-        scale=(1, 5)
-    ),
-    Question(
-        id="Q6",
-        text="It is important to preserve traditional values",
-        type=QuestionType.LIKERT,
-        category="opinion",
-        scale=(1, 5)
-    ),
-    Question(
-        id="Q8",
-        text="Ecology is more important than economic growth",
-        type=QuestionType.LIKERT,
-        category="opinion",
-        scale=(1, 5)
-    ),
-    Question(
-        id="Q9",
-        text="I am willing to take risks for new opportunities",
-        type=QuestionType.LIKERT,
-        category="opinion",
-        scale=(1, 5)
-    ),
-]
+def get_opinion_questions() -> List[Question]:
+    """
+    Get opinion questions (for archetypal analysis).
+    Loads from JSON: data/config/questions/opinion_survey.json
+    """
+    return _load_questions("opinion_survey")
 
-# ============================================================================
-# DEMOGRAPHIC QUESTIONS (for characterization)
-# ============================================================================
+def get_demographic_questions() -> List[Question]:
+    """
+    Get demographic questions (for characterization).
+    Loads from JSON: data/config/questions/demographics.json
+    """
+    return _load_questions("demographics")
 
-DEMOGRAPHIC_QUESTIONS = [
-    Question(
-        id="D1",
-        text="What is your age range?",
-        type=QuestionType.ORDINAL,
-        category="demographic",
-        options=["18-24", "25-34", "35-44", "45-54", "55-64", "65+"]
-    ),
-    Question(
-        id="D2",
-        text="Where do you primarily live?",
-        type=QuestionType.CATEGORICAL,
-        category="demographic",
-        options=["Urban/City", "Suburban", "Rural/Countryside"]
-    ),
-    Question(
-        id="D3",
-        text="What is your highest level of education?",
-        type=QuestionType.ORDINAL,
-        category="demographic",
-        options=["High School", "Some College", "Bachelor's", "Master's", "PhD"]
-    ),
-    Question(
-        id="D4",
-        text="What is your political orientation?",
-        type=QuestionType.CATEGORICAL,
-        category="demographic",
-        options=["Very Liberal", "Liberal", "Moderate", "Conservative", "Very Conservative"]
-    ),
-    Question(
-        id="D5",
-        text="How often do you follow the news?",
-        type=QuestionType.ORDINAL,
-        category="demographic",
-        options=["Never", "Rarely", "Sometimes", "Often", "Daily"]
-    ),
-]
+def get_second_survey_questions() -> List[Question]:
+    """
+    Get second survey questions (for validation).
+    Loads from JSON: data/config/questions/validation_survey.json
+    """
+    return _load_questions("validation_survey")
 
-# ============================================================================
-# SECOND SURVEY QUESTIONS (for validation)
-# ============================================================================
+def get_all_questions() -> List[Question]:
+    """Get all questions (opinion + demographic)"""
+    return get_opinion_questions() + get_demographic_questions()
 
-SECOND_SURVEY_QUESTIONS = [
-    Question(
-        id="S1",
-        text="Artificial intelligence threatens jobs",
-        type=QuestionType.LIKERT,
-        category="opinion",
-        scale=(1, 5)
-    ),
-    Question(
-        id="S3",
-        text="Government should regulate social media",
-        type=QuestionType.LIKERT,
-        category="opinion",
-        scale=(1, 5)
-    ),
-    Question(
-        id="S5",
-        text="Climate crisis requires immediate action",
-        type=QuestionType.LIKERT,
-        category="opinion",
-        scale=(1, 5)
-    ),
-    Question(
-        id="S2",
-        text="What is your income level?",
-        type=QuestionType.ORDINAL,
-        category="demographic",
-        options=["<$30k", "$30k-$60k", "$60k-$100k", "$100k-$150k", ">$150k"]
-    ),
-    Question(
-        id="S4",
-        text="How do you commute to work/school?",
-        type=QuestionType.CATEGORICAL,
-        category="demographic",
-        options=["Car", "Public Transit", "Bike/Walk", "Remote/No Commute"]
-    ),
-]
-
-# ============================================================================
-# COMBINED QUESTIONS
-# ============================================================================
-
-ALL_QUESTIONS = OPINION_QUESTIONS + DEMOGRAPHIC_QUESTIONS
+def load_custom_questions(template_name: str) -> List[Question]:
+    """
+    Load custom question template.
+    
+    Args:
+        template_name: Name of template (without .json extension)
+    
+    Returns:
+        List of Question objects
+    """
+    return _load_questions(template_name)
 
 # ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================
 
-def get_opinion_questions() -> List[Question]:
-    """Get only opinion questions (for archetypal analysis)"""
-    return OPINION_QUESTIONS
-
-def get_demographic_questions() -> List[Question]:
-    """Get only demographic questions (for characterization)"""
-    return DEMOGRAPHIC_QUESTIONS
-
 def get_likert_questions(question_list: List[Question] = None) -> List[Question]:
     """Get only Likert scale questions"""
     if question_list is None:
-        question_list = ALL_QUESTIONS
+        question_list = get_all_questions()
     return [q for q in question_list if q.type == QuestionType.LIKERT]
 
 def get_categorical_questions(question_list: List[Question] = None) -> List[Question]:
     """Get categorical and ordinal questions"""
     if question_list is None:
-        question_list = ALL_QUESTIONS
+        question_list = get_all_questions()
     return [q for q in question_list if q.type in [QuestionType.CATEGORICAL, QuestionType.ORDINAL]]
 
 def questions_to_dict_list(questions: List[Question]) -> List[Dict]:
     """Convert list of Question objects to list of dicts"""
     return [q.to_dict() for q in questions]
 
-def print_question_summary():
-    """Print summary of question organization"""
+def get_available_templates() -> List[str]:
+    """Get list of available question templates"""
+    from config.loader import get_question_templates
+    return get_question_templates()
+
+def print_question_summary(template_name: str = None):
+    """
+    Print summary of question organization.
+    
+    Args:
+        template_name: Specific template to summarize (default: all main templates)
+    """
     print("\n" + "="*60)
     print("QUESTION ORGANIZATION")
     print("="*60)
     
-    print(f"\n📊 OPINION QUESTIONS (for archetypal analysis):")
-    for q in OPINION_QUESTIONS:
-        print(f"  • {q.id}: {q.text}")
+    if template_name:
+        questions = load_custom_questions(template_name)
+        print(f"\n📊 {template_name.upper()}:")
+        for q in questions:
+            print(f"  • {q.id}: {q.text} ({q.type.value})")
+    else:
+        print(f"\n📊 OPINION QUESTIONS (for archetypal analysis):")
+        for q in get_opinion_questions():
+            print(f"  • {q.id}: {q.text}")
+        
+        print(f"\n👤 DEMOGRAPHIC QUESTIONS (for characterization):")
+        for q in get_demographic_questions():
+            print(f"  • {q.id}: {q.text}")
+        
+        print(f"\n✅ VALIDATION QUESTIONS (for second survey):")
+        for q in get_second_survey_questions():
+            print(f"  • {q.id}: {q.text}")
     
-    print(f"\n👤 DEMOGRAPHIC QUESTIONS (for characterization):")
-    for q in DEMOGRAPHIC_QUESTIONS:
-        print(f"  • {q.id}: {q.text}")
-    
-    print(f"\nTotal: {len(OPINION_QUESTIONS)} opinion + {len(DEMOGRAPHIC_QUESTIONS)} demographic")
     print("="*60 + "\n")
 
-if __name__ == "__main__":
-    print_question_summary()
+def print_available_templates():
+    """Print all available question templates"""
+    print("\n" + "="*60)
+    print("AVAILABLE QUESTION TEMPLATES")
+    print("="*60 + "\n")
     
-    # Test question creation
-    print("\n🧪 Testing question validation...")
+    templates = get_available_templates()
+    
+    if not templates:
+        print("No templates found. Run 'python migrate_to_json.py' to create default templates.")
+    else:
+        for template in templates:
+            questions = load_custom_questions(template)
+            print(f"📋 {template}")
+            print(f"   Questions: {len(questions)}")
+            
+            # Count by type
+            likert = sum(1 for q in questions if q.type == QuestionType.LIKERT)
+            categorical = sum(1 for q in questions if q.type == QuestionType.CATEGORICAL)
+            ordinal = sum(1 for q in questions if q.type == QuestionType.ORDINAL)
+            
+            print(f"   Likert: {likert} | Categorical: {categorical} | Ordinal: {ordinal}")
+            print()
+    
+    print("="*60 + "\n")
+
+# ============================================================================
+# TESTING
+# ============================================================================
+
+if __name__ == "__main__":
+    print("\n" + "="*80)
+    print("🧪 TESTING QUESTION LOADER")
+    print("="*80 + "\n")
+    
+    # Print available templates
+    print_available_templates()
+    
+    # Test loading opinion questions
+    print("Testing opinion questions...")
+    try:
+        questions = get_opinion_questions()
+        print(f"✅ Loaded {len(questions)} opinion questions")
+        for q in questions[:3]:
+            print(f"   • {q.id}: {q.text}")
+    except FileNotFoundError as e:
+        print(f"⚠️  {e}")
+        print("   Run 'python migrate_to_json.py' to create default templates")
+    
+    # Test loading demographic questions
+    print("\nTesting demographic questions...")
+    try:
+        questions = get_demographic_questions()
+        print(f"✅ Loaded {len(questions)} demographic questions")
+        for q in questions[:3]:
+            print(f"   • {q.id}: {q.text}")
+    except FileNotFoundError as e:
+        print(f"⚠️  {e}")
+    
+    # Test question validation
+    print("\n" + "="*80)
+    print("Testing question validation...")
     try:
         # This should work
         q1 = Question(
@@ -252,11 +232,19 @@ if __name__ == "__main__":
         print(f"✅ Created: {q1.id}")
         
         # This should fail (categorical without options)
-        q2 = Question(
-            id="TEST2",
-            text="Bad question",
-            type=QuestionType.CATEGORICAL,
-            category="demographic"
-        )
-    except ValueError as e:
-        print(f"✅ Validation working: {e}")
+        try:
+            q2 = Question(
+                id="TEST2",
+                text="Bad question",
+                type=QuestionType.CATEGORICAL,
+                category="demographic"
+            )
+        except ValueError as e:
+            print(f"✅ Validation working: {e}")
+    
+    except Exception as e:
+        print(f"❌ Test failed: {e}")
+    
+    print("\n" + "="*80)
+    print("✅ QUESTION LOADER TESTS COMPLETE")
+    print("="*80 + "\n")

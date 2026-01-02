@@ -3,70 +3,15 @@ import { Database, Brain, Users, Play, Upload, RefreshCw, BarChart, AlertCircle,
 
 const API_URL = 'http://localhost:8000/api';
 
-// Predefined archetypes for initial survey
-const DEFAULT_ARCHETYPES = [
-  {
-    name: 'Young Urban Progressive',
-    opinion_pattern: [3, 5, 2, 5, 5],
-    weight: 0.30
-  },
-  {
-    name: 'Conservative Rural Traditionalist',
-    opinion_pattern: [2, 2, 5, 2, 2],
-    weight: 0.25
-  },
-  {
-    name: 'Middle-Aged Suburban Moderate',
-    opinion_pattern: [3, 4, 3, 4, 3],
-    weight: 0.30
-  },
-  {
-    name: 'Apathetic Low-Engagement',
-    opinion_pattern: [3, 3, 3, 3, 2],
-    weight: 0.15
-  }
-];
-
-// Predefined question templates
-const QUESTION_TEMPLATES = {
-  'Opinion Survey (Default)': [
-    { id: 'Q1', text: 'I trust government institutions', type: 'likert', scale: '1-5' },
-    { id: 'Q2', text: 'Technological changes bring more benefits than harm', type: 'likert', scale: '1-5' },
-    { id: 'Q3', text: 'It is important to preserve traditional values', type: 'likert', scale: '1-5' },
-    { id: 'Q4', text: 'Ecology is more important than economic growth', type: 'likert', scale: '1-5' },
-    { id: 'Q5', text: 'I am willing to take risks for new opportunities', type: 'likert', scale: '1-5' }
-  ],
-  'Demographics': [
-    { id: 'D1', text: 'What is your age range?', type: 'ordinal', options: '18-24,25-34,35-44,45-54,55-64,65+' },
-    { id: 'D2', text: 'Where do you primarily live?', type: 'categorical', options: 'Urban/City,Suburban,Rural/Countryside' },
-    { id: 'D3', text: 'What is your highest level of education?', type: 'ordinal', options: 'High School,Some College,Bachelor\'s,Master\'s,PhD' },
-    { id: 'D4', text: 'What is your political orientation?', type: 'categorical', options: 'Very Liberal,Liberal,Moderate,Conservative,Very Conservative' },
-    { id: 'D5', text: 'How often do you follow the news?', type: 'ordinal', options: 'Never,Rarely,Sometimes,Often,Daily' }
-  ],
-  'Validation Questions': [
-    { id: 'S1', text: 'Artificial intelligence threatens jobs', type: 'likert', scale: '1-5' },
-    { id: 'S2', text: 'Government should regulate social media', type: 'likert', scale: '1-5' },
-    { id: 'S3', text: 'Climate crisis requires immediate action', type: 'likert', scale: '1-5' }
-  ],
-  'Mixed Question Types': [
-    { id: 'M1', text: 'How satisfied are you with your work-life balance?', type: 'likert', scale: '1-5' },
-    { id: 'M2', text: 'What is your employment status?', type: 'categorical', options: 'Full-time employed,Part-time employed,Self-employed,Unemployed,Student,Retired' },
-    { id: 'M3', text: 'How would you rate your income level?', type: 'ordinal', options: 'Very low,Low,Moderate,High,Very high' },
-    { id: 'M4', text: 'I feel optimistic about the future', type: 'likert', scale: '1-5' }
-  ]
-};
-
 export default function SurveyArchetypesApp() {
   const [activeTab, setActiveTab] = useState('archetypes');
   const [isLoading, setIsLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   const [error, setError] = useState(null);
 
-  // Archetypes State
-  const [initialArchetypes, setInitialArchetypes] = useState(DEFAULT_ARCHETYPES);
-
-  // Setup State
-  const [questions, setQuestions] = useState(QUESTION_TEMPLATES['Opinion Survey (Default)']);
+  // Archetypes & Questions State
+  const [initialArchetypes, setInitialArchetypes] = useState([]);
+  const [questions, setQuestions] = useState([]);
   const [config, setConfig] = useState({
     demographicContext: 'University Students in New York',
     temperature: 0.7,
@@ -75,6 +20,11 @@ export default function SurveyArchetypesApp() {
     calibrationSamples: 10,
     simulatedPopulation: 1000
   });
+
+
+  const [availableQuestionTemplates, setAvailableQuestionTemplates] = useState([]);
+  const [availableArchetypeSets, setAvailableArchetypeSets] = useState([]);
+  const [templateQuestions, setTemplateQuestions] = useState({}); // Cache for loaded templates
 
   // Discovery State
   const [kResults, setKResults] = useState([]);
@@ -86,7 +36,7 @@ export default function SurveyArchetypesApp() {
   const [editingPersona, setEditingPersona] = useState(null);
 
   // Second Survey State
-  const [secondSurveyQuestions, setSecondSurveyQuestions] = useState(QUESTION_TEMPLATES['Validation Questions']);
+  const [secondSurveyQuestions, setSecondSurveyQuestions] = useState([]);
 
   // Calibration State
   const [calibrationInProgress, setCalibrationInProgress] = useState(false);
@@ -100,6 +50,112 @@ export default function SurveyArchetypesApp() {
 
   // Visualization State
   const [visualizationUrl, setVisualizationUrl] = useState(null);
+
+  // Load configurations from backend on mount
+  useEffect(() => {
+    const loadConfigurations = async () => {
+      try {
+        // 1. Load available question templates
+        const templatesRes = await fetch(`${API_URL}/config/questions`);
+        const templatesData = await templatesRes.json();
+        setAvailableQuestionTemplates(templatesData.templates);
+        
+        // 2. Load default 'opinion_survey' if it exists
+        if (templatesData.templates.includes('opinion_survey')) {
+          const defaultRes = await fetch(`${API_URL}/config/questions/opinion_survey`);
+          const defaultData = await defaultRes.json();
+          
+          setQuestions(defaultData.questions);
+          
+          // Cache it
+          setTemplateQuestions(prev => ({
+            ...prev,
+            'opinion_survey': defaultData.questions
+          }));
+        }
+
+        // 3. Load default 'validation_survey' for Tab 4 (Second Survey)
+        if (templatesData.templates.includes('validation_survey')) {
+          const validRes = await fetch(`${API_URL}/config/questions/validation_survey`);
+          const validData = await validRes.json();
+          
+          setSecondSurveyQuestions(validData.questions);
+          
+          // Cache it
+          setTemplateQuestions(prev => ({
+            ...prev,
+            'validation_survey': validData.questions
+          }));
+        }
+        
+        // 4. Load available archetype sets
+        const archetypesRes = await fetch(`${API_URL}/config/archetypes`);
+        const archetypesData = await archetypesRes.json();
+        setAvailableArchetypeSets(archetypesData.archetype_sets);
+        
+        // 5. Load default archetypes
+        if (archetypesData.archetype_sets.includes('default')) {
+          const defaultArchRes = await fetch(`${API_URL}/config/archetypes/default`);
+          const defaultArchData = await defaultArchRes.json();
+          setInitialArchetypes(defaultArchData.archetypes);
+        }
+        
+        // 6. Load system configuration
+        const configRes = await fetch(`${API_URL}/config/system`);
+        const configData = await configRes.json();
+        setConfig({
+          demographicContext: configData.data_generation.demographic_context,
+          temperature: configData.ollama.temperature_persona,
+          randomSeed: configData.analysis.random_seed,
+          respondents: configData.data_generation.n_respondents,
+          calibrationSamples: configData.simulation.n_calibration_samples,
+          simulatedPopulation: configData.simulation.n_simulated_respondents
+        });
+        
+        setStatusMessage('✅ Configurations loaded from backend');
+        setTimeout(() => setStatusMessage(''), 2000);
+        
+      } catch (err) {
+        console.error('Failed to load configurations:', err);
+        setError('Failed to load configurations from server. Make sure backend is running.');
+      }
+    };
+    
+    loadConfigurations();
+  }, []);
+
+  // Helper function to load second survey template
+  const handleLoadSecondSurveyTemplate = async (templateName) => {
+    if (!templateName) return;
+    
+    try {
+      // Check cache first
+      if (templateQuestions[templateName]) {
+        setSecondSurveyQuestions(templateQuestions[templateName]);
+        setStatusMessage(`Loaded template: ${templateName}`);
+        setTimeout(() => setStatusMessage(''), 2000);
+        return;
+      }
+      
+      // Fetch from backend
+      const response = await fetch(`${API_URL}/config/questions/${templateName}`);
+      if (!response.ok) throw new Error('Failed to load template');
+      
+      const data = await response.json();
+      setSecondSurveyQuestions(data.questions);
+      
+      // Cache it
+      setTemplateQuestions(prev => ({
+        ...prev,
+        [templateName]: data.questions
+      }));
+      
+      setStatusMessage(`Loaded template: ${templateName}`);
+      setTimeout(() => setStatusMessage(''), 2000);
+    } catch (err) {
+      setError(`Failed to load template: ${err.message}`);
+    }
+  };
 
   // === HANDLERS ===
 
@@ -225,22 +281,44 @@ export default function SurveyArchetypesApp() {
     setStatusMessage('Starting calibration phase...');
 
     try {
-      await fetch(`${API_URL}/survey/questions`, {
+      // ✅ Format questions properly
+      const questionsPayload = secondSurveyQuestions.map(q => ({
+        id: q.id,
+        text: q.text,
+        type: q.type,
+        scale: q.scale,
+        options: q.options
+      }));
+
+      console.log('📤 Sending to backend:', questionsPayload);
+
+      // ✅ Send questions to backend
+      const saveResponse = await fetch(`${API_URL}/survey/questions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(secondSurveyQuestions)
+        body: JSON.stringify(questionsPayload)
       });
 
+      if (!saveResponse.ok) {
+        const errorData = await saveResponse.json().catch(() => ({}));
+        console.error('❌ Backend error:', errorData);
+        throw new Error(errorData.detail || 'Failed to save questions to backend');
+      }
+
+      const saveResult = await saveResponse.json();
+      console.log('✅ Backend saved:', saveResult);
+
+      // ✅ Now start WebSocket
       const ws = new WebSocket('ws://localhost:8000/api/calibration/live');
       
-      // ADD TIMEOUT
       const timeout = setTimeout(() => {
         ws.close();
         setError('Calibration timed out after 5 minutes');
         setCalibrationInProgress(false);
-      }, 300000); // 5 minutes
+      }, 1000000);
       
       ws.onopen = () => {
+        console.log('🔌 WebSocket connected');
         ws.send(JSON.stringify({
           n_samples: config.calibrationSamples
         }));
@@ -249,12 +327,13 @@ export default function SurveyArchetypesApp() {
 
       ws.onmessage = (event) => {
         const message = JSON.parse(event.data);
+        console.log('📨 Received:', message.type);
         
         if (message.type === 'calibration_update') {
           setCalibrationData(prev => [...prev, message.data]);
           setCalibrationProgress(message.progress);
         } else if (message.type === 'calibration_complete') {
-          clearTimeout(timeout); // CLEAR TIMEOUT
+          clearTimeout(timeout);
           setCalibrationInProgress(false);
           setStatusMessage('Calibration complete! Ready to simulate population.');
           ws.close();
@@ -263,7 +342,7 @@ export default function SurveyArchetypesApp() {
             setStatusMessage('');
           }, 2000);
         } else if (message.type === 'error') {
-          clearTimeout(timeout); // CLEAR TIMEOUT
+          clearTimeout(timeout);
           setError(message.message);
           setCalibrationInProgress(false);
           ws.close();
@@ -271,18 +350,19 @@ export default function SurveyArchetypesApp() {
       };
 
       ws.onerror = (error) => {
-        clearTimeout(timeout); // CLEAR TIMEOUT
-        console.error('WebSocket error:', error);
+        clearTimeout(timeout);
+        console.error('❌ WebSocket error:', error);
         setError('Connection error. Make sure backend is running.');
         setCalibrationInProgress(false);
       };
       
       ws.onclose = () => {
-        clearTimeout(timeout); // CLEAR TIMEOUT
-        console.log('WebSocket closed');
+        clearTimeout(timeout);
+        console.log('🔌 WebSocket closed');
       };
 
     } catch (err) {
+      console.error('❌ Calibration error:', err);
       setError(err.message);
       setCalibrationInProgress(false);
     }
@@ -385,12 +465,53 @@ export default function SurveyArchetypesApp() {
     }
   };
 
-  const handleLoadTemplate = (templateName) => {
-    if (templateName && QUESTION_TEMPLATES[templateName]) {
-      setQuestions(QUESTION_TEMPLATES[templateName]);
+  const handleLoadTemplate = async (templateName) => {
+    if (!templateName) return;
+    
+    try {
+      const response = await fetch(`${API_URL}/config/questions/${templateName}`);
+      if (!response.ok) throw new Error('Failed to load template');
+      
+      const data = await response.json();
+      setQuestions(data.questions);
+      setStatusMessage(`Loaded template: ${templateName}`);
+      setTimeout(() => setStatusMessage(''), 2000);
+    } catch (err) {
+      setError(`Failed to load template: ${err.message}`);
     }
   };
 
+  const handleSaveTemplate = async (templateName) => {
+    if (!templateName) {
+      setError('Please provide a template name');
+      return;
+    }
+    
+    try {
+      const response = await fetch(`${API_URL}/config/questions/${templateName}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          questions: questions,
+          description: `Custom template: ${templateName}`,
+          version: '1.0'
+        })
+      });
+      
+      if (!response.ok) throw new Error('Failed to save template');
+      
+      setStatusMessage(`Template '${templateName}' saved successfully!`);
+      
+      // Reload available templates
+      const templatesRes = await fetch(`${API_URL}/config/questions`);
+      const templatesData = await templatesRes.json();
+      setAvailableQuestionTemplates(templatesData.templates);
+      
+      setTimeout(() => setStatusMessage(''), 2000);
+    } catch (err) {
+      setError(`Failed to save template: ${err.message}`);
+    }
+  };
   const handleDownload = async (endpoint, filename) => {
     try {
       const response = await fetch(`${API_URL}${endpoint}`);
@@ -690,16 +811,28 @@ export default function SurveyArchetypesApp() {
               onChange={(e) => handleLoadTemplate(e.target.value)}
             >
               <option value="">Load Template...</option>
-              {Object.keys(QUESTION_TEMPLATES).map(key => (
-                <option key={key} value={key}>{key}</option>
+              {availableQuestionTemplates.map(template => (
+                <option key={template} value={template}>
+                  {template.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                </option>
               ))}
             </select>
+            <button 
+              onClick={() => {
+                const name = prompt('Enter template name:');
+                if (name) handleSaveTemplate(name);
+              }}
+              className="px-3 py-2 bg-green-600 text-white rounded-md text-sm flex items-center gap-2 hover:bg-green-700"
+            >
+              <Save size={16} /> Save as Template
+            </button>
             <button 
               onClick={handleAddQuestion}
               className="px-3 py-2 bg-blue-600 text-white rounded-md text-sm flex items-center gap-2 hover:bg-blue-700"
             >
               <PlusCircle size={16} /> Add Question
             </button>
+
           </div>
         </div>
 
@@ -1324,17 +1457,17 @@ export default function SurveyArchetypesApp() {
               <div className="flex gap-2 mb-4">
                 <select 
                   className="px-3 py-2 border rounded-md text-sm flex-grow"
-                  onChange={(e) => {
-                    if (e.target.value && QUESTION_TEMPLATES[e.target.value]) {
-                      setSecondSurveyQuestions(QUESTION_TEMPLATES[e.target.value]);
-                    }
-                  }}
+                  onChange={(e) => handleLoadSecondSurveyTemplate(e.target.value)}
+                  defaultValue=""
                 >
-                  <option value="">Load Template...</option>
-                  {Object.keys(QUESTION_TEMPLATES).map(key => (
-                    <option key={key} value={key}>{key}</option>
+                  <option value="" disabled>Load Template...</option>
+                  {availableQuestionTemplates.map(template => (
+                    <option key={template} value={template}>
+                      {template.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </option>
                   ))}
                 </select>
+
                 <button 
                   onClick={() => setSecondSurveyQuestions([...secondSurveyQuestions, {
                     id: `S${secondSurveyQuestions.length + 1}`,
@@ -1342,11 +1475,12 @@ export default function SurveyArchetypesApp() {
                     type: 'likert',
                     scale: '1-5'
                   }])}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm flex items-center gap-2"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm flex items-center gap-2 transition-colors shadow-sm"
                 >
                   <PlusCircle size={16} /> Add
                 </button>
               </div>
+
 
               <div className="border rounded-lg overflow-hidden">
                 <table className="w-full text-sm">
@@ -1452,6 +1586,9 @@ export default function SurveyArchetypesApp() {
 
             <button
               onClick={() => {
+                console.log('📋 Questions to send:', secondSurveyQuestions);
+                console.log('📋 Question count:', secondSurveyQuestions.length);
+                console.log('📊 Config samples:', config.calibrationSamples);
                 handleStartCalibration();
                 setActiveTab('calibration');
               }}

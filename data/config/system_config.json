@@ -1,0 +1,36 @@
+{
+  "version": "1.0",
+  "ollama": {
+    "model": "gemma3:4b",
+    "url": "http://localhost:11434",
+    "temperature_persona": 0.7,
+    "temperature_agent": 0.5,
+    "timeout": 120,
+    "max_retries": 3
+  },
+  "analysis": {
+    "n_archetypes": 4,
+    "target_r2": 0.8,
+    "random_seed": 42,
+    "max_archetypes_to_test": 8,
+    "max_iterations": 5000
+  },
+  "simulation": {
+    "n_calibration_samples": 10,
+    "n_simulated_respondents": 1000,
+    "stratified_sampling": false,
+    "use_existing_personas": true
+  },
+  "data_generation": {
+    "n_respondents": 200,
+    "missing_rate": 0,
+    "demographic_context": "University Students in New York"
+  },
+  "visualization": {
+    "dpi": 300,
+    "figure_format": "png",
+    "style": "seaborn-v0_8-darkgrid",
+    "color_palette": "husl",
+    "n_colors": 8
+  }
+}

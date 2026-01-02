@@ -38,3 +38,4 @@ fastapi
 uvicorn
 python-multipart
 pip install "uvicorn[standard]"
+jsonschema

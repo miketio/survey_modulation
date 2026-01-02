@@ -1,0 +1,71 @@
+{
+  "name": "Demographics",
+  "description": "Standard demographic questions",
+  "version": "1.0",
+  "questions": [
+    {
+      "id": "D1",
+      "text": "What is your age range?",
+      "type": "ordinal",
+      "category": "demographic",
+      "options": [
+        "18-24",
+        "25-34",
+        "35-44",
+        "45-54",
+        "55-64",
+        "65+"
+      ]
+    },
+    {
+      "id": "D2",
+      "text": "Where do you primarily live?",
+      "type": "categorical",
+      "category": "demographic",
+      "options": [
+        "Urban/City",
+        "Suburban",
+        "Rural/Countryside"
+      ]
+    },
+    {
+      "id": "D3",
+      "text": "What is your highest level of education?",
+      "type": "ordinal",
+      "category": "demographic",
+      "options": [
+        "High School",
+        "Some College",
+        "Bachelor's",
+        "Master's",
+        "PhD"
+      ]
+    },
+    {
+      "id": "D4",
+      "text": "What is your political orientation?",
+      "type": "categorical",
+      "category": "demographic",
+      "options": [
+        "Very Liberal",
+        "Liberal",
+        "Moderate",
+        "Conservative",
+        "Very Conservative"
+      ]
+    },
+    {
+      "id": "D5",
+      "text": "How often do you follow the news?",
+      "type": "ordinal",
+      "category": "demographic",
+      "options": [
+        "Never",
+        "Rarely",
+        "Sometimes",
+        "Often",
+        "Daily"
+      ]
+    }
+  ]
+}

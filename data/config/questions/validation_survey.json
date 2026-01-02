@@ -1,0 +1,62 @@
+{
+  "name": "Validation Questions",
+  "description": "Second survey questions for validation",
+  "version": "1.0",
+  "questions": [
+    {
+      "id": "S1",
+      "text": "Artificial intelligence threatens jobs",
+      "type": "likert",
+      "category": "opinion",
+      "scale": [
+        1,
+        5
+      ]
+    },
+    {
+      "id": "S3",
+      "text": "Government should regulate social media",
+      "type": "likert",
+      "category": "opinion",
+      "scale": [
+        1,
+        5
+      ]
+    },
+    {
+      "id": "S5",
+      "text": "Climate crisis requires immediate action",
+      "type": "likert",
+      "category": "opinion",
+      "scale": [
+        1,
+        5
+      ]
+    },
+    {
+      "id": "S2",
+      "text": "What is your income level?",
+      "type": "ordinal",
+      "category": "demographic",
+      "options": [
+        "<$30k",
+        "$30k-$60k",
+        "$60k-$100k",
+        "$100k-$150k",
+        ">$150k"
+      ]
+    },
+    {
+      "id": "S4",
+      "text": "How do you commute to work/school?",
+      "type": "categorical",
+      "category": "demographic",
+      "options": [
+        "Car",
+        "Public Transit",
+        "Bike/Walk",
+        "Remote/No Commute"
+      ]
+    }
+  ]
+}

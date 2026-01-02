@@ -2,131 +2,106 @@
 generators/survey_data_generator.py
 
 Generates synthetic survey data with embedded archetypal patterns.
+Now loads archetype definitions from JSON via loader.
 """
 
 import numpy as np
 import pandas as pd
-from typing import List, Dict
+from typing import List, Dict, Optional
 
-from config.settings import DATA_GEN
+from config.settings import DATA_GEN, ANALYSIS
 from config.questions import (
     Question, QuestionType, 
-    get_opinion_questions, get_demographic_questions, ALL_QUESTIONS
+    get_opinion_questions, get_demographic_questions
 )
+from config.loader import load_archetypes
 
 
 class SurveyDataGenerator:
     """
     Generates synthetic survey responses with archetypal structure.
+    Archetypes loaded from JSON configuration files.
     """
     
-    def __init__(self, seed: int = None):
+    def __init__(
+        self, 
+        archetypes: Optional[List[Dict]] = None,
+        archetype_name: str = "default",
+        seed: int = None
+    ):
         """
         Initialize generator.
         
         Args:
+            archetypes: Explicit archetype definitions (overrides archetype_name)
+            archetype_name: Name of archetype set to load from JSON
             seed: Random seed for reproducibility
         """
-        self.seed = seed or DATA_GEN.RANDOM_SEED if hasattr(DATA_GEN, 'RANDOM_SEED') else 42
+        self.seed = seed if seed is not None else getattr(ANALYSIS, 'RANDOM_SEED', 42)
         np.random.seed(self.seed)
         
         self.opinion_questions = get_opinion_questions()
         self.demographic_questions = get_demographic_questions()
         self.all_questions = self.opinion_questions + self.demographic_questions
         
-        # Build ground truth archetypes
-        self.true_archetypes = self._build_archetypes()
+        # Load archetypes from JSON or use provided
+        if archetypes is not None:
+            self.true_archetypes = archetypes
+        else:
+            self.true_archetypes = load_archetypes(archetype_name)
+        
+        # Build complete archetype patterns
+        self._build_complete_patterns()
     
-    def _build_archetypes(self) -> List[Dict]:
-        """Build ground truth archetypal patterns"""
-        
-        archetypes = [
-            {
-                'name': 'Young Urban Progressive',
-                'opinion_pattern': [3, 5, 2, 5, 5],  # Trust, Tech+, Traditional-, Ecology+, Risk+
-                'demographic_pattern': {
-                    'age': '18-24',
-                    'location': 'Urban/City',
-                    'education': "Bachelor's",
-                    'politics': 'Very Liberal',
-                    'news': 'Daily'
-                },
-                'variance': {'likert': 0.8, 'categorical': 0.2, 'ordinal': 0.15},
-                'weight': 0.30
-            },
-            {
-                'name': 'Conservative Rural Traditionalist',
-                'opinion_pattern': [2, 2, 5, 2, 2],  # Trust-, Tech-, Traditional+, Ecology-, Risk-
-                'demographic_pattern': {
-                    'age': '45-54',
-                    'location': 'Rural/Countryside',
-                    'education': 'High School',
-                    'politics': 'Conservative',
-                    'news': 'Sometimes'
-                },
-                'variance': {'likert': 0.7, 'categorical': 0.15, 'ordinal': 0.1},
-                'weight': 0.25
-            },
-            {
-                'name': 'Middle-Aged Suburban Moderate',
-                'opinion_pattern': [3, 4, 3, 4, 3],  # Neutral overall
-                'demographic_pattern': {
-                    'age': '35-44',
-                    'location': 'Suburban',
-                    'education': "Bachelor's",
-                    'politics': 'Moderate',
-                    'news': 'Often'
-                },
-                'variance': {'likert': 0.6, 'categorical': 0.1, 'ordinal': 0.1},
-                'weight': 0.30
-            },
-            {
-                'name': 'Apathetic Low-Engagement',
-                'opinion_pattern': [3, 3, 3, 3, 2],  # Mostly neutral, risk-averse
-                'demographic_pattern': {
-                    'age': '25-34',
-                    'location': 'Urban/City',
-                    'education': 'Some College',
-                    'politics': 'Moderate',
-                    'news': 'Rarely'
-                },
-                'variance': {'likert': 1.0, 'categorical': 0.3, 'ordinal': 0.2},
-                'weight': 0.15
-            }
-        ]
-        
-        # Map patterns to question IDs
-        for archetype in archetypes:
+    def _build_complete_patterns(self):
+        """
+        Build complete response patterns for each archetype.
+        Maps opinion_pattern to question IDs and fills in demographic patterns.
+        """
+        for archetype in self.true_archetypes:
             full_pattern = {}
             
             # Map opinion questions
+            opinion_pattern = archetype.get('opinion_pattern', [])
             for i, q in enumerate(self.opinion_questions):
-                if i < len(archetype['opinion_pattern']):
-                    full_pattern[q.id] = archetype['opinion_pattern'][i]
+                if i < len(opinion_pattern):
+                    full_pattern[q.id] = opinion_pattern[i]
                 else:
-                    full_pattern[q.id] = 3.0
+                    full_pattern[q.id] = 3.0  # Default neutral
             
             # Map demographic questions
-            demo_map = archetype['demographic_pattern']
+            demo_pattern = archetype.get('demographic_pattern', {})
             for q in self.demographic_questions:
                 q_text_lower = q.text.lower()
                 
+                # Try to intelligently map demographics
                 if 'age' in q_text_lower:
-                    full_pattern[q.id] = demo_map.get('age', q.options[2])
+                    full_pattern[q.id] = demo_pattern.get('age', q.options[2] if q.options else None)
                 elif 'live' in q_text_lower or 'location' in q_text_lower:
-                    full_pattern[q.id] = demo_map.get('location', q.options[0])
+                    full_pattern[q.id] = demo_pattern.get('location', q.options[0] if q.options else None)
                 elif 'education' in q_text_lower:
-                    full_pattern[q.id] = demo_map.get('education', q.options[2])
+                    full_pattern[q.id] = demo_pattern.get('education', q.options[2] if q.options else None)
                 elif 'political' in q_text_lower:
-                    full_pattern[q.id] = demo_map.get('politics', q.options[2])
+                    full_pattern[q.id] = demo_pattern.get('politics', q.options[2] if q.options else None)
                 elif 'news' in q_text_lower:
-                    full_pattern[q.id] = demo_map.get('news', q.options[2])
+                    full_pattern[q.id] = demo_pattern.get('news', q.options[2] if q.options else None)
                 else:
-                    full_pattern[q.id] = q.options[len(q.options)//2]
+                    # Default to middle option
+                    if q.options:
+                        full_pattern[q.id] = q.options[len(q.options)//2]
+                    else:
+                        full_pattern[q.id] = None
             
+            # Store complete pattern
             archetype['pattern'] = full_pattern
-        
-        return archetypes
+            
+            # Ensure variance exists
+            if 'variance' not in archetype:
+                archetype['variance'] = {
+                    'likert': 0.8,
+                    'categorical': 0.2,
+                    'ordinal': 0.15
+                }
     
     def generate(
         self, 
@@ -137,14 +112,14 @@ class SurveyDataGenerator:
         Generate synthetic survey responses.
         
         Args:
-            n_respondents: Number of respondents
-            missing_rate: Proportion of missing data
+            n_respondents: Number of respondents (default from config)
+            missing_rate: Proportion of missing data (default from config)
         
         Returns:
             DataFrame with responses
         """
-        n_respondents = n_respondents or DATA_GEN.N_RESPONDENTS
-        missing_rate = missing_rate or DATA_GEN.MISSING_RATE
+        n_respondents = n_respondents if n_respondents is not None else DATA_GEN.N_RESPONDENTS
+        missing_rate = missing_rate if missing_rate is not None else DATA_GEN.MISSING_RATE
         
         responses = []
         metadata = []
@@ -160,14 +135,14 @@ class SurveyDataGenerator:
                 for q in self.all_questions:
                     q_id = q.id
                     
-                    if q_id not in pattern:
+                    # Get base value
+                    base_value = pattern.get(q_id)
+                    if base_value is None:
                         # Default values
                         if q.type == QuestionType.LIKERT:
-                            pattern[q_id] = 3.0
+                            base_value = 3.0
                         else:
-                            pattern[q_id] = q.options[len(q.options)//2]
-                    
-                    base_value = pattern[q_id]
+                            base_value = q.options[len(q.options)//2] if q.options else None
                     
                     # Add missing data
                     if np.random.random() < missing_rate:
@@ -239,6 +214,29 @@ class SurveyDataGenerator:
     def get_true_archetypes(self) -> List[Dict]:
         """Get ground truth archetypes"""
         return self.true_archetypes
+    
+    def print_archetype_summary(self):
+        """Print summary of loaded archetypes"""
+        print("\n" + "="*80)
+        print("ARCHETYPE SUMMARY")
+        print("="*80 + "\n")
+        
+        total_weight = sum(a['weight'] for a in self.true_archetypes)
+        
+        for i, arch in enumerate(self.true_archetypes):
+            print(f"Archetype {i+1}: {arch['name']}")
+            print(f"  Weight: {arch['weight']:.1%} (normalized: {arch['weight']/total_weight:.1%})")
+            print(f"  Opinion Pattern: {arch.get('opinion_pattern', [])}")
+            
+            variance = arch.get('variance', {})
+            print(f"  Variance: Likert={variance.get('likert', 0):.2f}, "
+                  f"Cat={variance.get('categorical', 0):.2f}, "
+                  f"Ord={variance.get('ordinal', 0):.2f}")
+            print()
+        
+        print(f"Total archetypes: {len(self.true_archetypes)}")
+        print(f"Total weight: {total_weight:.3f}")
+        print("="*80 + "\n")
 
 
 if __name__ == "__main__":
@@ -246,27 +244,40 @@ if __name__ == "__main__":
     print("🧪 TESTING SURVEY DATA GENERATOR")
     print("="*80 + "\n")
     
-    generator = SurveyDataGenerator(seed=42)
+    try:
+        # Create generator
+        generator = SurveyDataGenerator(seed=42)
+        
+        # Print summary
+        generator.print_archetype_summary()
+        
+        # Print questions
+        print(f"Opinion questions: {len(generator.opinion_questions)}")
+        for q in generator.opinion_questions:
+            print(f"  • {q.id}: {q.text}")
+        
+        print(f"\nDemographic questions: {len(generator.demographic_questions)}")
+        for q in generator.demographic_questions:
+            print(f"  • {q.id}: {q.text}")
+        
+        # Generate data
+        print(f"\nGenerating data...")
+        df = generator.generate(n_respondents=50)
+        
+        print(f"✅ Generated {len(df)} respondents")
+        print(f"   Columns: {list(df.columns)}")
+        print(f"\nFirst 3 rows:")
+        print(df.head(3))
+        
+        print(f"\nArchetype distribution:")
+        print(df['archetype_name'].value_counts())
+        
+        print("\n" + "="*80)
+        print("✅ DATA GENERATOR TESTS PASSED")
+        print("="*80 + "\n")
     
-    print(f"Opinion questions: {len(generator.opinion_questions)}")
-    for q in generator.opinion_questions:
-        print(f"  • {q.id}: {q.text}")
-    
-    print(f"\nDemographic questions: {len(generator.demographic_questions)}")
-    for q in generator.demographic_questions:
-        print(f"  • {q.id}: {q.text}")
-    
-    print(f"\nGenerating data...")
-    df = generator.generate(n_respondents=50)
-    
-    print(f"✅ Generated {len(df)} respondents")
-    print(f"   Columns: {list(df.columns)}")
-    print(f"\nFirst 3 rows:")
-    print(df.head(3))
-    
-    print(f"\nArchetype distribution:")
-    print(df['archetype_name'].value_counts())
-    
-    print("\n" + "="*80)
-    print("✅ DATA GENERATOR TESTS PASSED")
-    print("="*80 + "\n")
+    except FileNotFoundError as e:
+        print(f"❌ Error: {e}")
+        print("\n⚠️  Missing JSON configuration files!")
+        print("   Run: python migrate_to_json.py")
+        print("\n" + "="*80 + "\n")
