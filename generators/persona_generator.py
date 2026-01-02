@@ -33,7 +33,53 @@ class PersonaSchema(BaseModel):
         if ',' not in v:
             raise ValueError("Name must include age (e.g., 'Sarah, 21')")
         return v
+    
+    @field_validator('media_consumption', mode='before')
+    def validate_media_consumption(cls, v):
+        """Convert media_consumption to string if it's a list"""
+        if isinstance(v, list):
+            # Join list items into a string
+            return ", ".join(str(item) for item in v if item)
+        if v is None:
+            return "Various media sources"
+        return str(v).strip()
+    
+    @field_validator('values', 'fears', mode='before')
+    def validate_lists(cls, v):
+        """Ensure values and fears are valid lists"""
+        if isinstance(v, str):
+            # If it's a string, try to split it
+            return [item.strip() for item in v.split(',') if item.strip()]
+        if not isinstance(v, list):
+            return ["Default value"]
+        return v
 
+def generate_system_prompt(persona: Dict) -> str:
+    """
+    Generate system prompt from persona fields.
+    Ensures edits to worldview, values, fears are reflected.
+    """
+    name = persona.get('name', 'Person')
+    occupation = persona.get('occupation', 'individual')
+    worldview = persona.get('worldview', '')
+    values = persona.get('values', [])
+    fears = persona.get('fears', [])
+    
+    values_str = ', '.join(values) if isinstance(values, list) else str(values)
+    fears_str = ', '.join(fears) if isinstance(fears, list) else str(fears)
+    
+    system_prompt = f"""You are {name}, a {occupation}.
+
+Your worldview: {worldview}
+
+You strongly value: {values_str}
+
+You are concerned about or fear: {fears_str}
+
+When answering questions, think like someone with this specific worldview and these values. Your answers should be consistent with your beliefs, fears, and life experiences.
+"""
+    
+    return system_prompt
 
 def parse_demographic_context(context: str) -> Dict:
     """

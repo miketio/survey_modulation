@@ -31,8 +31,14 @@ class SurveyAgent:
         """
         self.persona = persona
         self.model = model or OLLAMA.MODEL
-        self.system_prompt = persona.get('system_prompt', '')
-        self.last_reasoning = None
+        # CRITICAL FIX: Regenerate system prompt from current persona state
+        if 'worldview' in persona and 'values' in persona:
+            from generators.persona_generator import generate_system_prompt
+            self.system_prompt = generate_system_prompt(persona)
+        else:
+            self.system_prompt = persona.get('system_prompt', '')
+        
+        self.last_reasoning = None        
         
         # Initialize Ollama client
         try:

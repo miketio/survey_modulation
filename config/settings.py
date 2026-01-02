@@ -104,7 +104,7 @@ class DataGenerationConfig:
     """Parameters for synthetic data generation"""
     
     N_RESPONDENTS: int = 200
-    MISSING_RATE: float = 0.03  # 3% missing data
+    MISSING_RATE: float = 0  # 0% missing data
     DEMOGRAPHIC_CONTEXT: str = "University Students in New York"
 
 DATA_GEN = DataGenerationConfig()
