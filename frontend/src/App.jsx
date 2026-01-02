@@ -308,7 +308,6 @@ export default function SurveyArchetypesApp() {
       const saveResult = await saveResponse.json();
       console.log('✅ Backend saved:', saveResult);
 
-      // ✅ Now start WebSocket
       const ws = new WebSocket('ws://localhost:8000/api/calibration/live');
       
       const timeout = setTimeout(() => {
