@@ -58,7 +58,7 @@ ollama serve  # Keep running in background
 **2. Install Survey Archetypes:**
 
 ```bash
-git clone https://github.com/miketio/survey-archetypes
+git clone https://github.com/yourusername/survey-archetypes
 cd survey-archetypes
 pip install -r requirements.txt
 
@@ -103,6 +103,72 @@ The web interface guides you through 7 stages:
 | **7. Analysis** | Visualize & export results | Download CSV, generate plots | 1 min |
 
 **Total Time:** ~15-20 minutes from start to synthetic dataset
+
+### Visual Walkthrough
+
+<details>
+<summary><b>Stage 0: Initial Archetypes</b></summary>
+
+![Stage 0: Archetypes](readme_images/stage_0.jpg)
+
+Define the "pure personality types" that will generate your synthetic data. Edit names, opinion patterns (1-5 scores), and population weights.
+</details>
+
+<details>
+<summary><b>Stage 1: Setup & Configuration</b></summary>
+
+![Stage 1: Setup](readme_images/stage_1.jpg)
+
+Configure survey questions and system parameters. Load templates or create custom questions for your study.
+</details>
+
+<details>
+<summary><b>Stage 2: Archetype Discovery</b></summary>
+
+![Stage 2: Discovery](readme_images/stage_2.jpg)
+
+Run k-analysis to find the optimal number of archetypes. Compare R² scores and select the best k value.
+</details>
+
+<details>
+<summary><b>Stage 3: Persona Generation</b></summary>
+
+![Stage 3: Personas](readme_images/stage_3.jpg)
+
+AI-generated personas with rich backgrounds, worldviews, and values. Review and edit as needed.
+</details>
+
+<details>
+<summary><b>Stage 4: Second Survey Questions</b></summary>
+
+![Stage 4: Survey](readme_images/stage_4.jpg)
+
+Define new validation questions that AI agents will answer. Supports Likert, categorical, and ordinal types.
+</details>
+
+<details>
+<summary><b>Stage 5: Calibration Phase</b></summary>
+
+![Stage 5: Calibration](readme_images/stage_5.jpg)
+
+Watch live as agents answer each question multiple times to build probability distributions.
+</details>
+
+<details>
+<summary><b>Stage 6: Population Simulation</b></summary>
+
+![Stage 6: Simulation](readme_images/stage_6.jpg)
+
+Generate your full synthetic population using calibrated response probabilities.
+</details>
+
+<details>
+<summary><b>Stage 7: Analysis & Export</b></summary>
+
+![Stage 7: Analysis](readme_images/stage_7.jpg)
+
+Visualize results and download your synthetic dataset, calibration data, and personas.
+</details>
 
 ---
 
@@ -221,7 +287,7 @@ AI Agent approach: Reasons about each question in context
 **Key Design:**
 - **Multiple Sampling**: Each agent answers 10+ times per question
 - **Calibration**: Builds probability distributions (not single answers)
-- **Local LLM**: Privacy-first (Ollama), no data leaves your machine. Can be used as much as you want
+- **Local LLM**: Privacy-first (Ollama), no data leaves your machine
 
 ---
 
@@ -482,6 +548,8 @@ MIT License - Free for research and commercial use.
 2. Verify Ollama is running: `ollama list`
 3. Check configuration: `data/config/system_config.json`
 4. Run module tests: `python core/archetypal_analyzer.py`
+
+**Questions?** Open an issue on GitHub or consult the full documentation.
 
 ---
 
