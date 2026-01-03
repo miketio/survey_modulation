@@ -58,7 +58,7 @@ ollama serve  # Keep running in background
 **2. Install Survey Archetypes:**
 
 ```bash
-git clone https://github.com/yourusername/survey-archetypes
+git clone https://github.com/miketio/survey-archetypes
 cd survey-archetypes
 pip install -r requirements.txt
 
