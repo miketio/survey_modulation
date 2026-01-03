@@ -1,21 +1,289 @@
-# Survey Archetypes: Semantic Decomposition System
+# Survey Archetypes: Transform Data Patterns into AI Personas
 
-**Transform survey data into interpretable AI personas using Archetypal Analysis and Large Language Models.**
+> **Discover hidden audience segments in your survey data, then simulate how they'll respond to new questions—without surveying anyone again.**
 
 ---
 
-## 🎯 Overview
+## 🎯 The Problem
 
-This system performs:
+You've run a survey and collected responses. Now you want to:
 
-1. **Archetypal Analysis**: Decompose survey responses into "pure types" (archetypes)
-2. **Semantic Inversion**: Convert mathematical patterns into human personas using LLMs
-3. **AI Agents**: Create agents that embody these personas
-4. **Population Simulation**: Generate large synthetic populations with realistic variance
+- **Test new questions** without re-surveying everyone
+- **Understand audience segments** beyond simple demographics  
+- **Predict reactions** to new products, policies, or messaging
+- **Generate larger datasets** for statistical validity
 
-Instead of abstract principal components, we extract interpretable personas like:
-- *"Progressive Student, 22, values innovation"*
-- *"Conservative Professional, 55, values stability"*
+Traditional approaches fall short:
+
+❌ **Manual personas are subjective** - "Sarah, 25, tech-savvy" lacks rigor  
+❌ **Simple clustering misses nuance** - People aren't just one type  
+❌ **Small samples limit analysis** - Hard to detect patterns with 50 respondents
+
+---
+
+## ✨ The Solution
+
+**Survey Archetypes** discovers the fundamental "personality types" hidden in your data, converts them into believable AI personas, then deploys them as intelligent agents that can answer *new* questions while maintaining their worldview.
+
+### What You Get
+
+1. **Data-Driven Personas**: Not guessed—mathematically discovered from response patterns
+2. **AI Survey Agents**: Personas that can think and answer new questions consistently  
+3. **Synthetic Populations**: Generate 1,000+ responses from a 50-person survey
+4. **Mock Survey Mode**: Start with hypothetical archetypes to design and validate surveys
+
+### Perfect For
+
+✅ **Product managers** testing concepts before launch  
+✅ **Researchers** expanding small datasets  
+✅ **Survey designers** validating instruments before fielding  
+✅ **Policy analysts** predicting stakeholder reactions  
+✅ **Market researchers** understanding audience segments
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites & Installation
+
+**1. Install Ollama** (local LLM for persona generation):
+
+```bash
+# Visit: https://ollama.ai and download for your OS
+# After installation:
+ollama pull gemma3:4b
+ollama serve  # Keep running in background
+```
+
+**2. Install Survey Archetypes:**
+
+```bash
+git clone https://github.com/yourusername/survey-archetypes
+cd survey-archetypes
+pip install -r requirements.txt
+
+# Install frontend
+cd frontend
+npm install
+cd ..
+```
+
+### Launch the Application
+
+**Terminal 1 - Backend:**
+```bash
+python api/server.py
+# → Backend running at http://localhost:8000
+```
+
+**Terminal 2 - Frontend:**
+```bash
+cd frontend
+npm run dev
+# → Frontend at http://localhost:5173
+```
+
+**Open browser:** http://localhost:5173
+
+---
+
+## 🔄 Workflow Overview
+
+The web interface guides you through 7 stages:
+
+| Stage | Purpose | Key Actions | Duration |
+|-------|---------|-------------|----------|
+| **0. Archetypes** | Define or edit initial personality types | Edit patterns, weights, demographic context | 2-5 min |
+| **1. Setup** | Configure questions and parameters | Load templates or create custom questions | 3-5 min |
+| **2. Discovery** | Find optimal number of archetypes (k) | Run k-analysis (k=2 to k=8), select best k | 1-2 min |
+| **3. Personas** | Generate rich AI personas from patterns | Review/edit LLM-generated descriptions | 2-3 min |
+| **4. Survey** | Define new questions for validation | Add Likert/categorical/ordinal questions | 2-3 min |
+| **5. Calibration** | Agents answer questions multiple times | Watch live as probability distributions build | 1-2 min |
+| **6. Simulation** | Generate full synthetic population | Configure size (default: 1,000), run simulation | 30 sec |
+| **7. Analysis** | Visualize & export results | Download CSV, generate plots | 1 min |
+
+**Total Time:** ~15-20 minutes from start to synthetic dataset
+
+---
+
+## 🔬 How It Works
+
+### Stage 1: Pattern Discovery (Archetypal Analysis)
+
+**What happens:** Mathematical decomposition finds "pure personality types" in your data.
+
+**The Math:**
+```
+Survey Data = Mixing Weights × Pure Archetypes
+
+Where:
+- Survey Data: How each person answered (n_people × n_questions)
+- Mixing Weights: How much of each type is in each person
+- Pure Archetypes: The extreme personalities everyone blends from
+```
+
+**Why archetypes, not clustering?**
+
+| Method | What It Finds | Example |
+|--------|---------------|---------|
+| **K-Means Clustering** | Groups of similar people with hard boundaries | "You're in Group A or Group B" |
+| **Archetypal Analysis** | Extreme types that everyone is a mixture of | "You're 70% Type A + 30% Type B" |
+
+**Output Example:**
+```
+Your 200 respondents decompose into:
+- Type A: Trust institutions, risk-averse (40% of sample)
+- Type B: Tech optimist, environmentalist (30%)  
+- Type C: Traditional, skeptical of change (20%)
+- Type D: Disengaged, neutral on most topics (10%)
+
+Person #137 = 70% Type A + 30% Type B
+```
+
+**Key Insight:** Like primary colors mixing to create all shades—any respondent is a weighted combination of these pure archetypes.
+
+---
+
+### Stage 2: Semantic Translation (LLM Persona Generation)
+
+**What happens:** Local LLM converts mathematical patterns into human narratives.
+
+**Transformation Example:**
+
+```
+Mathematical Pattern (Type B):
+├─ Q1 (Trust govt): 2/5
+├─ Q2 (Tech optimism): 5/5
+├─ Q3 (Tradition): 2/5
+├─ Q4 (Ecology): 5/5
+└─ Q5 (Risk-taking): 4/5
+
+        ↓ LLM Translation ↓
+
+Generated Persona:
+"Leo Maxwell, 22
+Computer Science Junior at NYU
+Values: Innovation, autonomy, environmental sustainability
+Fears: Institutional overreach, stagnation, ecological collapse
+Worldview: Deeply skeptical of government but optimistic about 
+technology solving problems. Believes in taking calculated risks 
+for progress while protecting the planet."
+```
+
+**Features:**
+- ✅ **Contrastive Generation**: Each persona explicitly differs from previous ones
+- ✅ **Demographic Constraints**: Enforces realistic age, occupation, location
+- ✅ **Explainable**: Shows why this persona gave specific scores
+- ✅ **Editable**: Refine manually—system regenerates reasoning automatically
+
+---
+
+### Stage 3: Agent Construction (Survey-Taking AI)
+
+**What happens:** Personas become AI agents that can answer new questions using Chain-of-Thought reasoning.
+
+**Agent Architecture:**
+
+```
+┌─────────────────────────────────────┐
+│  PERSONA (System Prompt)            │
+│  "You are Leo Maxwell, 22...        │
+│   Values: Innovation | Fears: ..."  │
+└─────────────────────────────────────┘
+              ↓
+┌─────────────────────────────────────┐
+│  NEW QUESTION                        │
+│  "Trust social media companies?"    │
+└─────────────────────────────────────┘
+              ↓
+┌─────────────────────────────────────┐
+│  CHAIN-OF-THOUGHT REASONING          │
+│  "I'm optimistic about tech (Q2=5)  │
+│   BUT distrust institutions (Q1=2)  │
+│   → Social media = tech + corporate │
+│   → Leaning toward skepticism..."   │
+└─────────────────────────────────────┘
+              ↓
+┌─────────────────────────────────────┐
+│  ANSWER: 2/5 (Disagree)             │
+│  + Explainable reasoning            │
+└─────────────────────────────────────┘
+```
+
+**Why AI agents vs simple sampling?**
+
+Traditional sampling: `if archetype == "Progressive": answer = random.choice([4,5])`  
+❌ Can't handle new questions | ❌ No reasoning | ❌ No consistency
+
+AI Agent approach: Reasons about each question in context  
+✅ Answers unseen questions | ✅ Maintains worldview | ✅ Explains logic | ✅ Adapts to phrasing
+
+**Key Design:**
+- **Multiple Sampling**: Each agent answers 10+ times per question
+- **Calibration**: Builds probability distributions (not single answers)
+- **Local LLM**: Privacy-first (Ollama), no data leaves your machine. Can be used as much as you want
+
+---
+
+### Stage 4: Calibration & Simulation
+
+**Calibration:** Agents answer each new question multiple times to capture uncertainty.
+
+```
+Leo (Type B) answers "Trust social media?" 10 times:
+[2, 2, 3, 2, 2, 1, 2, 3, 2, 2]
+
+Statistics:
+- Modal answer: 2 (most common)
+- P(answer 1): 10%
+- P(answer 2): 70%  ← Most likely
+- P(answer 3): 20%
+- Mean: 2.1, StdDev: 0.5
+```
+
+**Simulation:** Generate full population using calibrated distributions.
+
+```
+1. Assign archetypes by weight:
+   Respondent #1 → Type A (40% weight)
+   Respondent #2 → Type B (30% weight)
+   ...
+
+2. Sample responses from calibrated distributions:
+   Respondent #2 (Type B) on Q: "Trust social media?"
+   → Samples from [10% chance=1, 70% chance=2, 20% chance=3]
+   → Gets "2"
+
+3. Result: 1,000 respondents with realistic variance
+```
+
+---
+
+### Stage 5: Validation & Export
+
+**Validation Methods:**
+- Distribution comparison (simulated vs expected)
+- R² scores (how well archetypes explain variance)
+- Statistical tests (are type differences significant?)
+- Visual plots (side-by-side real vs synthetic)
+
+**Example:**
+```
+Original Survey (200 people):
+  Progressive: 40% | Traditionalist: 20%
+
+Simulated (1,000 people):  
+  Progressive: 39.8% | Traditionalist: 20.3%
+  
+✅ Distributions match within statistical error
+✅ R² = 0.87 (strong pattern preservation)
+```
+
+**Export:**
+- `simulated_survey.csv` - Full synthetic dataset (1,000+ rows)
+- `calibration_data.csv` - Probability distributions per agent
+- `personas.json` - Complete persona descriptions
+- Visualization plots (distribution comparisons)
 
 ---
 
@@ -23,445 +291,204 @@ Instead of abstract principal components, we extract interpretable personas like
 
 ```
 survey_archetypes/
+├── data/
+│   ├── config/              # JSON configurations
+│   │   ├── questions/       # Question templates
+│   │   ├── archetypes/      # Archetype definitions
+│   │   └── system_config.json
+│   ├── input/               # Your CSV files
+│   └── output/              # Results & plots
 │
-├── data/                          # All data storage
-│   ├── input/                     # Original survey data (CSV)
-│   ├── personas/                  # Generated personas (JSON)
-│   └── output/                    # Results and visualizations
-│       ├── plots/                 # All PNG visualizations
-│       ├── generated_survey.csv
-│       ├── simulated_survey.csv
-│       └── analysis_summary.json
+├── config/                  # Python config layer
+│   ├── settings.py          # Paths & parameters
+│   ├── questions.py         # Question schemas
+│   └── loader.py            # JSON loader
 │
-├── config/                        # Configuration
-│   ├── settings.py                # Paths, Ollama, parameters
-│   └── questions.py               # Survey question definitions
+├── core/                    # Core algorithms
+│   ├── archetypal_analyzer.py  # NMF/PCHA decomposition
+│   └── encoding.py          # Data type conversion
 │
-├── core/                          # Core algorithms
-│   ├── archetypal_analyzer.py     # NMF/PCHA decomposition
-│   ├── encoding.py                # Type conversion utilities
-│   └── validation.py              # Quality metrics (TODO)
+├── generators/              # Creation modules
+│   ├── survey_data_generator.py
+│   └── persona_generator.py
 │
-├── generators/                    # Data creation
-│   ├── survey_data_generator.py   # Synthetic survey data
-│   └── persona_generator.py       # LLM-based persona creation
+├── agents/                  # AI behavior
+│   └── survey_agent.py      # Survey-taking agents
 │
-├── agents/                        # AI behavior
-│   └── survey_agent.py            # Survey-taking AI agents
+├── simulation/              # Population simulation
+│   └── population_simulator.py
 │
-├── simulation/                    # Population simulation
-│   ├── population_simulator.py    # Main simulation logic
-│   └── calibrator.py              # Uncertainty calibration (TODO)
+├── analysis/                # Visualization
+│   └── visualization.py
 │
-├── analysis/                      # Analysis and visualization
-│   ├── visualization.py           # All plotting functions
-│   └── results_analyzer.py        # Post-simulation analysis (TODO)
+├── api/                     # Web backend (FastAPI)
+│   └── server.py
 │
-├── utils/                         # Utilities
-│   ├── ollama_client.py           # Ollama connection wrapper
-│   └── file_io.py                 # Loading/saving helpers
+├── frontend/                # React UI
+│   └── src/App.jsx
 │
-├── scripts/                       # Orchestration scripts
-│   └── run_simulation.py          # Population simulation workflow
-│
-├── tests/                         # Unit tests
-│   └── (TODO)
-│
-├── gui/                           # Future web interface
-│   └── (TODO)
-│
-├── main.py                        # Main pipeline script
-├── requirements.txt               # Python dependencies
-└── README.md                      # This file
+└── requirements.txt
 ```
 
 ---
 
-## 🚀 Quick Start
+## 📋 Usage Guidelines
 
-### 1. Installation
+### What This Tool CAN Do
+
+✅ Discover mathematically-grounded audience segments  
+✅ Simulate responses to new questions within same domain  
+✅ Generate statistically valid synthetic datasets  
+✅ Test survey designs before fielding  
+✅ Scale small datasets (50 → 1,000+)
+
+### What This Tool CANNOT Do
+
+❌ Replace real human insight and qualitative research  
+❌ Predict responses to completely unrelated questions  
+❌ Capture complex emotions or unstructured feedback  
+❌ Guarantee AI reasoning perfectly matches human reasoning  
+❌ Work with fewer than ~30-50 initial respondents
+
+### Best Practices
+
+**Data Quality:**
+- Minimum 50 respondents recommended
+- Include diverse question types (Likert + categorical)
+- Ensure questions are clear and well-designed
+
+**Validation:**
+- Always validate against held-out real data when possible
+- Check archetype distributions make intuitive sense
+- Review generated personas for appropriateness
+
+**Usage:**
+- Use for hypothesis generation, not final decisions
+- Test new questions *related* to original survey domain
+- Combine with qualitative research methods
+- Don't extrapolate too far from training data
+
+**LLM Settings:**
+- Keep Ollama running during all operations
+- Larger models (7B+) produce more consistent reasoning
+- Default temperature (0.7) balances creativity/consistency
+- Chain-of-Thought prompting is crucial for quality
+
+---
+
+## 🔧 Troubleshooting
+
+### Ollama Connection Issues
+
+**Error:** `Connection refused to localhost:11434`
 
 ```bash
-# Clone repository
-cd survey_archetypes
+# Check if running:
+ollama list
 
-# Install Python dependencies
-pip install -r requirements.txt
-
-# Install Ollama (for persona generation)
-# Visit: https://ollama.ai
-# Then:
-ollama pull gemma3:4b
+# Start server:
 ollama serve
+
+# Verify model:
+ollama pull gemma3:4b
 ```
 
-### 2. Run Main Pipeline
+### Persona Generation Slow/Fails
+
+**Solutions:**
+1. Use smaller model: `ollama pull gemma3:2b`
+2. Increase timeout in `data/config/system_config.json`:
+   ```json
+   "ollama": {"timeout": 300}
+   ```
+3. Check Ollama logs for errors
+
+### Frontend Can't Connect to Backend
 
 ```bash
-python main.py
+# 1. Verify backend running:
+python api/server.py  # Should show port 8000
+
+# 2. Check API_URL in frontend/src/App.jsx:
+const API_URL = 'http://localhost:8000/api';
+
+# 3. Clear browser cache
 ```
 
-This will:
-- Generate synthetic survey data (200 respondents)
-- Perform archetypal analysis (find k archetypes)
-- Generate AI personas using Ollama
-- Create visualizations
-- Save results to `data/output/`
+### Synthetic Data Seems Random
 
-### 3. Run Population Simulation
+**Fixes:**
+1. Increase `calibration_samples` to 15-20
+2. Review initial archetypes (Tab 0)
+3. Lower `temperature_agent` in config
+4. Ensure training data has variance
 
-```bash
-python scripts/run_simulation.py
-```
+### Python Import Errors
 
-This will:
-- Load personas from main pipeline
-- Calibrate response uncertainty (10 samples per agent)
-- Simulate large population (1000 respondents)
-- Generate analysis plots
-
----
-
-## 📊 Usage
-
-### Basic Workflow
-
-```python
-from config.settings import PATHS, initialize
-from generators.survey_data_generator import SurveyDataGenerator
-from core.archetypal_analyzer import ArchetypalAnalyzer
-from core.encoding import SurveyEncoder
-from generators.persona_generator import PersonaGenerator
-from agents.survey_agent import SurveyAgent
-
-# Initialize
-initialize()
-
-# 1. Generate data
-generator = SurveyDataGenerator()
-df = generator.generate(n_respondents=200)
-
-# 2. Encode for analysis
-encoder = SurveyEncoder()
-questions = generator.get_opinion_questions()
-encoder.fit(questions)
-data = encoder.encode_dataframe(df, questions, use_opinion_only=True)
-
-# 3. Archetypal analysis
-analyzer = ArchetypalAnalyzer(n_archetypes=4)
-archetypes, weights, proportions = analyzer.fit(data)
-
-# 4. Generate personas
-persona_gen = PersonaGenerator()
-personas = persona_gen.generate_batch(
-    archetypes=archetypes,
-    questions=questions,
-    weights=proportions,
-    r2_scores=analyzer.get_r2_scores()
-)
-
-# 5. Create agents
-agents = [SurveyAgent(p) for p in personas]
-
-# 6. Run new survey
-from config.questions import SECOND_SURVEY_QUESTIONS
-results = []
-for agent in agents:
-    answers = agent.answer_survey(SECOND_SURVEY_QUESTIONS)
-    results.append({
-        'name': agent.get_name(),
-        'weight': agent.get_weight(),
-        'answers': answers
-    })
-```
-
-### Using Real Survey Data
-
-```python
-from utils.file_io import load_dataframe
-import pandas as pd
-
-# Load your CSV (format: rows=respondents, cols=questions)
-df = load_dataframe(filename="your_survey.csv")
-
-# Continue with encoding and analysis
-encoder = SurveyEncoder()
-# ... rest of workflow
-```
-
----
-
-## 🔧 Configuration
-
-### Paths
-
-Edit `config/settings.py` to change file locations:
-
-```python
-class Paths:
-    BASE_DIR = Path(__file__).parent.parent
-    DATA_DIR = BASE_DIR / "data"
-    # ...
-```
-
-### Ollama Settings
-
-```python
-class OllamaConfig:
-    MODEL = "gemma3:4b"
-    URL = "http://localhost:11434"
-    TEMPERATURE_PERSONA = 0.7
-    TEMPERATURE_AGENT = 0.5
-```
-
-### Analysis Parameters
-
-```python
-class AnalysisConfig:
-    N_ARCHETYPES = 4
-    TARGET_R2 = 0.80
-    RANDOM_SEED = 42
-```
-
-### Simulation Parameters
-
-```python
-class SimulationConfig:
-    N_CALIBRATION_SAMPLES = 10
-    N_SIMULATED_RESPONDENTS = 1000
-```
-
----
-
-## 📈 Visualizations
-
-The system generates the following plots (all saved to `data/output/plots/`):
-
-1. **1_input_data_distributions.png** - Original survey response distributions
-2. **2_archetype_patterns.png** - Discovered archetype profiles
-3. **4_archetype_distributions.png** - Calibrated transition probabilities (Likert only)
-4. **5_simulated_population.png** - Simulated population distributions (Likert only)
-
----
-
-## 🧪 Testing
-
-### Test Individual Modules
-
-Each module has built-in tests:
-
-```bash
-# Test encoding
-python core/encoding.py
-
-# Test persona generator
-python generators/persona_generator.py
-
-# Test survey agent
-python agents/survey_agent.py
-
-# Test visualizer
-python analysis/visualization.py
-```
-
-### Integration Test
-
-The main pipeline serves as an integration test:
-
-```bash
-python main.py
-```
-
----
-
-## 🛠 Troubleshooting
-
-### Ollama Connection Error
-
-```
-Error: Connection refused to localhost:11434
-```
-
-**Solution**:
-1. Check Ollama is running: `ollama list`
-2. Start Ollama: `ollama serve`
-3. Check firewall settings
-
-### Import Errors
-
-```
-ModuleNotFoundError: No module named 'sklearn'
-```
-
-**Solution**:
 ```bash
 pip install -r requirements.txt
+pip install ollama
 ```
-
-### Persona Generation Fails
-
-```
-Timeout generating persona
-```
-
-**Solution**:
-- Increase timeout in `config/settings.py`:
-```python
-OLLAMA.TIMEOUT = 300  # 5 minutes
-```
-- Use a smaller model: `ollama pull mistral:7b-instruct`
-
-### Visualization Shows No Categorical Questions
-
-This is by design - only Likert questions (1-5 scale) are visualized in distribution plots because categorical questions don't have meaningful numeric distributions.
 
 ---
 
-## 📚 Methodology
+## 🎓 Learn More
 
-### Archetypal Analysis
+### Example Applications
 
-We use **NMF (Non-negative Matrix Factorization)** or **PCHA (Principal Convex Hull Analysis)**:
+**Market Research:**
+- Test product concepts on synthetic consumer panels
+- Predict adoption rates by segment before launch
 
-```
-X ≈ W × H
+**Public Policy:**
+- Simulate stakeholder reactions to regulations
+- Identify opposition sources and design communication strategies
 
-X: response matrix (n_respondents × n_questions)
-W: weights matrix (n_respondents × n_archetypes)
-H: archetypes matrix (n_archetypes × n_questions)
-```
+**Academic Research:**
+- Generate training data for ML models
+- Conduct power analysis with synthetic samples
+- Validate survey instruments before fielding
 
-Benefits over PCA:
-- Archetypes are **interpretable** (no negative values)
-- Represent **extreme points** in the data cloud
-- Any respondent = **weighted combination** of archetypes
+### Related Research
 
-### Contrastive Persona Generation
-
-Each persona is generated with awareness of previous personas to ensure distinctness:
-
-```python
-Persona_2 = LLM(
-    answers_2, 
-    "This person DIFFERS from Persona_1"
-)
-```
-
-### Transition Probabilities
-
-Instead of single-point answers, agents provide probability distributions:
-
-```python
-# Agent answers "4" most often, but:
-p_lower = 0.20  # 20% chance of answering "3"
-p_stay  = 0.60  # 60% chance of answering "4"
-p_higher = 0.20  # 20% chance of answering "5"
-```
-
-This creates realistic response variance in simulations.
-
----
-
-## 🎯 Use Cases
-
-1. **Market Research**: Test new product concepts on synthetic consumer segments
-2. **Public Policy**: Simulate reactions to proposed laws across demographics
-3. **Data Augmentation**: Expand small datasets into larger populations
-4. **Method Testing**: Validate clustering algorithms with known ground truth
-5. **Survey Design**: Identify which questions discriminate best between groups
-
----
-
-## 📝 Output Files
-
-After running workflows:
-
-### From main.py:
-- `data/output/generated_survey.csv` - Synthetic survey data
-- `data/personas/personas.json` - Generated persona descriptions
-- `data/output/analysis_summary.json` - Analysis metadata
-- `data/output/plots/1_input_data_distributions.png`
-- `data/output/plots/2_archetype_patterns.png`
-
-### From run_simulation.py:
-- `data/output/archetype_distributions.csv` - Calibration statistics
-- `data/output/simulated_survey.csv` - Simulated population (1000+ respondents)
-- `data/output/plots/4_archetype_distributions.png`
-- `data/output/plots/5_simulated_population.png`
-
----
-
-## 🔬 Advanced Features
-
-### Custom Questions
-
-Edit `config/questions.py`:
-
-```python
-from config.questions import Question, QuestionType
-
-CUSTOM_QUESTIONS = [
-    Question(
-        id="CQ1",
-        text="Your custom question here",
-        type=QuestionType.LIKERT,
-        category="opinion",
-        scale=(1, 5)
-    )
-]
-```
-
-### Demographic Constraints
-
-Change the target population in `config/settings.py`:
-
-```python
-class DataGenerationConfig:
-    DEMOGRAPHIC_CONTEXT = "Healthcare Workers in Rural Areas"
-```
-
-The system will automatically enforce these constraints during persona generation.
-
----
-
-## 🚧 TODO / Future Work
-
-- [ ] Add comprehensive unit tests (`tests/`)
-- [ ] Implement validation framework (`core/validation.py`)
-- [ ] Add results analyzer (`analysis/results_analyzer.py`)
-- [ ] Create web interface (`gui/`)
-- [ ] Support for matrix questions
-- [ ] Real-time dashboard
-- [ ] API endpoints for integration
-
----
-
-## 📄 License
-
-MIT License - feel free to use and modify for your research.
+- **Cutler & Breiman (1994)**: "Archetypal Analysis" - Original method
+- **Wei et al. (2022)**: "Chain-of-Thought Prompting" - CoT reasoning foundation
+- **El Emam et al. (2020)**: "Practical Synthetic Data Generation" - Validation best practices
 
 ---
 
 ## 🤝 Contributing
 
-Contributions welcome! Areas for improvement:
+We welcome contributions! Priority areas:
 
-1. **Better archetypal methods**: Implement true AA (not NMF approximation)
-2. **Advanced persona generation**: Use RAG or fine-tuned models
+1. **Better archetypal methods**: Implement true PCHA (not NMF approximation)
+2. **Advanced persona generation**: RAG or fine-tuned models
 3. **Validation metrics**: More sophisticated similarity measures
-4. **Real-world datasets**: Test on actual survey data
-5. **Web interface**: Build interactive dashboard
+4. **Real-world datasets**: Test on diverse survey types
+5. **Documentation**: More examples and tutorials
+
+---
+
+## 📄 License
+
+MIT License - Free for research and commercial use.
 
 ---
 
 ## 📧 Support
 
-For questions or issues:
-1. Check the troubleshooting section above
-2. Run module tests to isolate the problem
-3. Check Ollama connection status
-4. Review configuration in `config/settings.py`
+**Issues?** 
+1. Check Troubleshooting section above
+2. Verify Ollama is running: `ollama list`
+3. Check configuration: `data/config/system_config.json`
+4. Run module tests: `python core/archetypal_analyzer.py`
 
 ---
 
-**Happy Analyzing! 🎉**
+**Ready to discover your hidden audience segments?** 🚀
+
+```bash
+python api/server.py  # Start backend
+cd frontend && npm run dev  # Start frontend
+# Open http://localhost:5173
+```
